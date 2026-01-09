@@ -1,9 +1,28 @@
 @echo off
+chcp 65001 >nul
 echo.
 echo ========================================
-echo   Bot Traducteur - Deployment Container
+echo   🧅 Aux Petits Oignons
 echo ========================================
 echo.
+
+set "CONFIG_FILE=%~dp0conf_opencode\.env"
+
+:: Vérifier si la configuration existe
+if not exist "%CONFIG_FILE%" (
+    echo Configuration non trouvee. Lancement de la configuration...
+    echo.
+    call "%~dp0configure.bat"
+)
+
+:: Vérifier que le fichier a bien été créé
+if not exist "%CONFIG_FILE%" (
+    echo.
+    echo Erreur: Configuration requise pour continuer.
+    pause
+    exit /b 1
+)
+
 echo Demarrage du container...
 docker-compose up -d
 

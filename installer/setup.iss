@@ -39,6 +39,7 @@ Source: "..\docker-compose.yml"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\doc_server.py"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\requirements.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\start.bat"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\configure.bat"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\icone\oignon.ico"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
@@ -46,6 +47,7 @@ Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "
 Name: "{group}\Documentation (Web)"; Filename: "http://localhost:5545/procedure"; IconFilename: "{app}\oignon.ico"
 Name: "{group}\Solution Power Platform"; Filename: "{app}\Solution"; IconFilename: "{app}\oignon.ico"
 Name: "{group}\Rapports Clients"; Filename: "{app}\clients"; IconFilename: "{app}\oignon.ico"
+Name: "{group}\Configuration"; Filename: "{app}\configure.bat"; IconFilename: "{app}\oignon.ico"; WorkingDir: "{app}"
 Name: "{group}\Désinstaller {#MyAppName}"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\oignon.ico"; WorkingDir: "{app}"; Tasks: desktopicon
 
@@ -55,8 +57,10 @@ Name: "desktopicon"; Description: "Créer une icône sur le Bureau"; GroupDescri
 [Run]
 ; Build l'image Docker après installation
 Filename: "cmd.exe"; Parameters: "/c cd /d ""{app}"" && docker-compose build"; StatusMsg: "Construction de l'image Docker (cela peut prendre plusieurs minutes)..."; Flags: runhidden waituntilterminated
+; Configurer les credentials OpenCode
+Filename: "{app}\configure.bat"; Description: "Configurer les credentials OpenCode (Azure Foundry)"; Flags: postinstall nowait skipifsilent shellexec
 ; Proposer de lancer l'application
-Filename: "{app}\{#MyAppExeName}"; Description: "Lancer {#MyAppName}"; Flags: postinstall nowait skipifsilent shellexec
+Filename: "{app}\{#MyAppExeName}"; Description: "Lancer {#MyAppName}"; Flags: postinstall nowait skipifsilent unchecked shellexec
 
 [Code]
 function IsDockerInstalled(): Boolean;
