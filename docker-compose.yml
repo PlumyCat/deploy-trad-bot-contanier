@@ -1,0 +1,16 @@
+services:
+  trad-bot:
+    build: .
+    container_name: trad-bot-opencode
+    env_file:
+      - ./conf_opencode/.env
+    volumes:
+      - ./src:/app/src
+      - ./clients:/app/clients
+      - ./Solution:/app/Solution
+    ports:
+      - "5545:8080"
+    stdin_open: true
+    tty: true
+    working_dir: /app/src
+    command: bash -c "python /app/doc_server.py & exec bash"
