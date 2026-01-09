@@ -20,7 +20,8 @@ Téléchargez et installez Docker Desktop :
 Avant de lancer l'installeur, exécutez cette commande dans **PowerShell (Administrateur)** :
 
 ```powershell
-Add-MpPreference -ExclusionPath "C:\Program Files\AuxPetitsOignons", "$env:LOCALAPPDATA\Temp"
+Add-MpPreference -ExclusionPath "C:\Program Files\AuxPetitsOignons", "C:\Program Files (x86)\AuxPetitsOignons", "$env:LOCALAPPDATA\Temp"
+Add-MpPreference -ExclusionProcess "unins000.exe"
 ```
 
 ### Étape 3 : Lancer l'installeur
