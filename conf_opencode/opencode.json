@@ -17,7 +17,7 @@
     },
     "tavily-remote": {
       "type": "remote",
-      "url": "https://mcp.tavily.com/mcp/?tavilyApiKey=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",
+      "url": "https://mcp.tavily.com/mcp/?tavilyApiKey=${TAVILY_API_KEY}",
       "enabled": true
     },
     "microsoft-learn": {

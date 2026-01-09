@@ -29,11 +29,21 @@ set /p API_KEY="ANTHROPIC_API_KEY : "
 set /p BASE_URL="ANTHROPIC_BASE_URL : "
 
 echo.
+echo Configuration Tavily (MCP Search)
+echo ----------------------------------
+echo.
+echo Cle API disponible sur https://tavily.com
+echo.
+
+set /p TAVILY_KEY="TAVILY_API_KEY : "
+
+echo.
 echo Enregistrement de la configuration...
 
 (
 echo ANTHROPIC_API_KEY=%API_KEY%
 echo ANTHROPIC_BASE_URL=%BASE_URL%
+echo TAVILY_API_KEY=%TAVILY_KEY%
 ) > "%CONFIG_FILE%"
 
 echo.
