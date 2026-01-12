@@ -24,6 +24,12 @@ if not exist "%CONFIG_FILE%" (
 )
 
 echo Demarrage du container...
+echo.
+
+:: Arrêter et supprimer le container existant s'il existe
+docker stop trad-bot-opencode >nul 2>&1
+docker rm trad-bot-opencode >nul 2>&1
+
 docker-compose up -d
 
 echo.
