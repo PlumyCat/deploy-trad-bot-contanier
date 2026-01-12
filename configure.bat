@@ -12,7 +12,11 @@ if exist "%CONFIG_FILE%" (
     echo Configuration existante detectee.
     echo.
     set /p OVERWRITE="Voulez-vous la modifier ? (O/N) : "
-    if /i not "%OVERWRITE%"=="O" (
+    if /i "%OVERWRITE%"=="N" (
+        echo Configuration conservee.
+        goto :end
+    )
+    if /i "%OVERWRITE%"=="NON" (
         echo Configuration conservee.
         goto :end
     )
