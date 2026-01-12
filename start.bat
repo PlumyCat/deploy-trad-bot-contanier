@@ -37,6 +37,8 @@ echo Ouverture de la documentation...
 start http://localhost:5545/procedure
 
 echo.
-echo Lancement d'OpenCode...
+echo Connexion au container...
 echo.
-docker exec -it trad-bot-opencode opencode
+echo Pour lancer OpenCode, tapez: opencode
+echo.
+docker exec -it trad-bot-opencode bash
