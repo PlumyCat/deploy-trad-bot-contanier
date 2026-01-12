@@ -85,7 +85,12 @@ RUN mkdir -p /app/clients
 ENV VIRTUAL_ENV=/app/venv
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
+# Copy and setup entrypoint
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
 # Expose port for documentation server
 EXPOSE 8080
 
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["bash"]

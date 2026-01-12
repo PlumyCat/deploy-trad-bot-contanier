@@ -6,7 +6,7 @@ services:
       - ./src:/app/src
       - ./clients:/app/clients
       - ./Solution:/app/Solution
-      - ./conf_opencode:/root/.config/opencode
+      - ./conf_opencode:/app/conf_opencode_mount
     ports:
       - "5545:8080"
     stdin_open: true
