@@ -2,12 +2,11 @@ services:
   trad-bot:
     build: .
     container_name: trad-bot-opencode
-    env_file:
-      - ./conf_opencode/.env
     volumes:
       - ./src:/app/src
       - ./clients:/app/clients
       - ./Solution:/app/Solution
+      - ./conf_opencode:/root/.config/opencode
     ports:
       - "5545:8080"
     stdin_open: true

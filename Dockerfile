@@ -65,8 +65,12 @@ RUN python3 -m venv venv && \
 RUN mkdir -p /root/.config/opencode
 
 # Copy OpenCode configuration files
-COPY conf_opencode/.env /root/.config/opencode/
+# Use .env if it exists, otherwise use .env.example as fallback
 COPY conf_opencode/opencode.json /root/.config/opencode/
+COPY conf_opencode/.env* /root/.config/opencode/
+RUN if [ ! -f /root/.config/opencode/.env ]; then \
+    cp /root/.config/opencode/.env.example /root/.config/opencode/.env 2>/dev/null || true; \
+    fi
 
 # Copy project source
 COPY src/ /app/src/
