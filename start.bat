@@ -105,13 +105,28 @@ echo Ouverture de la documentation...
 start http://localhost:5545/procedure
 
 echo.
-echo Connexion au container...
+echo ========================================
+echo   Container pret !
+echo ========================================
 echo.
-echo Pour lancer OpenCode, tapez: opencode
+echo   Commandes disponibles :
+echo.
+echo     opencode      - Nouvelle conversation
+echo     opencode -c   - REPRENDRE la conversation precedente
+echo.
+echo   Si la conversation a ete coupee, utilisez: opencode -c
+echo.
+echo ========================================
 echo.
 docker exec -it trad-bot-opencode bash
 
 :: Si on arrive ici après exit du container, on pause pour voir les messages
 echo.
-echo Session terminee.
+echo ========================================
+echo   Session terminee
+echo ========================================
+echo.
+echo   Pour reprendre plus tard : relancez start.bat
+echo   puis tapez: opencode -c
+echo.
 pause

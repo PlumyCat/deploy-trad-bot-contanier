@@ -92,6 +92,20 @@ RUN mkdir -p /app/clients
 ENV VIRTUAL_ENV=/app/venv
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
+# Message de bienvenue dans le container
+RUN echo '\n\
+echo ""\n\
+echo "========================================"\n\
+echo "  🧅 Aux Petits Oignons"\n\
+echo "========================================"\n\
+echo ""\n\
+echo "  opencode      Nouvelle conversation"\n\
+echo "  opencode -c   REPRENDRE conversation"\n\
+echo ""\n\
+echo "========================================"\n\
+echo ""\n\
+' >> /root/.bashrc
+
 # Copy and setup entrypoint
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
