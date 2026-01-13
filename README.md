@@ -26,12 +26,9 @@ Téléchargez et installez Docker Desktop :
 
 ### Étape 3 : Préparer Windows Defender
 
-**Avant de lancer l'installeur**, exécuter dans **PowerShell (Administrateur)** :
+**Avant de compiler**, clic droit sur `exclude-defender.ps1` → **Exécuter avec PowerShell en tant qu'administrateur**
 
-```powershell
-# Exclure le dossier contenant l'exe ET le dossier d'installation
-Add-MpPreference -ExclusionPath "$env:USERPROFILE\Desktop", "C:\Program Files\AuxPetitsOignons", "C:\Program Files (x86)\AuxPetitsOignons"
-```
+> Ce script exclut automatiquement le dossier du projet et le dossier d'installation.
 
 ### Étape 4 : Lancer l'installeur
 
