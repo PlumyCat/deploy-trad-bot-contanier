@@ -245,6 +245,41 @@ az functionapp config appsettings set \
 
 ---
 
+## PHASE 2 : Power Platform (etapes manuelles)
+
+### ⚠️ Cette phase se fait dans le NAVIGATEUR, pas en ligne de commande !
+
+**Aucune commande `az login` n'est necessaire pour cette phase.**
+
+Le technicien doit suivre la documentation illustree :
+
+👉 **Ouvrir dans le navigateur : http://localhost:5545/procedure**
+
+### Resume des etapes manuelles :
+
+1. Se connecter a **https://make.powerapps.com** avec le compte Admin du tenant client
+2. Selectionner l'environnement cible
+3. Importer la solution depuis `Solution/BotCopilotTraducteur_1_0_0_4.zip`
+4. Configurer les connexions (Azure Functions URL)
+5. Publier le bot
+
+> 📖 **La documentation complete avec captures d'ecran est disponible sur : http://localhost:5545/procedure**
+
+---
+
+## Documentation
+
+La documentation est accessible a tout moment sur :
+
+👉 **http://localhost:5545/procedure**
+
+Elle contient :
+- Guide pas-a-pas avec captures d'ecran
+- Configuration Power Platform
+- Import de la solution Copilot Studio
+
+---
+
 ## Variables d'environnement requises
 
 ### Azure Storage
@@ -280,8 +315,16 @@ az functionapp config appsettings set \
 
 ## Rappel : Ordre des operations
 
-1. **Lancer start.bat** avec Tenant ID client + compte **Admin Global client** -> Creer App Entra -> Noter CLIENT_ID, SECRET_ID, TENANT_ID
-2. **exit + relancer start.bat** avec compte **delegue** -> Deployer ressources Azure -> Configurer Function App avec TOUTES les variables
-3. **exit + relancer start.bat** avec compte **Admin client** -> Importer solution Power Platform
+| Phase | Compte requis | Actions |
+|-------|---------------|---------|
+| **Phase 0** | Admin Global client | `az login --tenant` + Creer App Entra |
+| **Phase 1** | Compte delegue | `az login --tenant` + Deployer Azure |
+| **Phase 2** | Admin client | **NAVIGATEUR uniquement** (pas de az login) |
 
-> **Note** : La connexion Azure se fait sur Windows (avec navigateur), puis les credentials sont partages avec le container automatiquement.
+### Phase 2 = Documentation !
+
+Pour la Phase 2, **ne pas demander de az login**. Dire au technicien :
+
+> "La Phase 2 se fait dans le navigateur. Ouvrez http://localhost:5545/procedure et suivez les etapes illustrees."
+
+> **Note** : La connexion Azure (Phases 0 et 1) se fait sur Windows avec navigateur, puis les credentials sont partages avec le container automatiquement.
