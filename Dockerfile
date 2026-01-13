@@ -102,6 +102,8 @@ echo ""\n\
 echo "  opencode      Nouvelle conversation"\n\
 echo "  opencode -c   REPRENDRE conversation"\n\
 echo ""\n\
+echo "  az-update     Mettre a jour Azure CLI"\n\
+echo ""\n\
 echo "========================================"\n\
 echo ""\n\
 ' >> /root/.bashrc

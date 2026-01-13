@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+# Alias pour mise à jour facile
+echo 'alias az-update="az upgrade --yes"' >> /root/.bashrc
+
 # Copy config files from mounted volume to config directory with correct permissions
 if [ -d /app/conf_opencode_mount ]; then
     echo "Copying OpenCode configuration..."
