@@ -8,33 +8,23 @@ Un environnement de déploiement tout-en-un pour le **Bot Traducteur Copilot Stu
 
 ## 🚀 Installation
 
-### Étape 1 : Installer Docker Desktop
+### Prérequis
 
-Téléchargez et installez Docker Desktop :
-👉 **https://www.docker.com/products/docker-desktop/**
+1. **Docker Desktop** : https://www.docker.com/products/docker-desktop/
+2. **Inno Setup** : https://jrsoftware.org/isdl.php
 
-> ⚠️ **Important** : Redémarrez votre ordinateur après l'installation de Docker.
+> ⚠️ Redémarrez votre ordinateur après l'installation de Docker.
 
-### Étape 2 : Compiler l'installeur
+### Étapes d'installation
 
-> ⚠️ **L'exe n'est pas inclus dans le repo** (non signé = bloqué par Defender)
+```
+1. Cloner le repo
+2. Clic droit sur exclude-defender.ps1 → Exécuter en tant qu'administrateur
+3. Ouvrir installer/setup.iss avec Inno Setup → Compile (Ctrl+F9)
+4. Lancer installer/output/AuxPetitsOignons_Setup.exe
+```
 
-1. Installer [Inno Setup](https://jrsoftware.org/isdl.php)
-2. Ouvrir `installer/setup.iss`
-3. Build → Compile (Ctrl+F9)
-4. L'exe est généré dans `installer/output/`
-
-### Étape 3 : Préparer Windows Defender
-
-**Avant de compiler**, clic droit sur `exclude-defender.ps1` → **Exécuter avec PowerShell en tant qu'administrateur**
-
-> Ce script exclut automatiquement le dossier du projet et le dossier d'installation.
-
-### Étape 4 : Lancer l'installeur
-
-Double-cliquez sur `installer/output/AuxPetitsOignons_Setup.exe` 🧅
-
-> **Note** : La configuration des credentials OpenCode nécessite les droits admin (écriture dans Program Files).
+> **Note** : L'exe n'est pas inclus dans le repo (non signé = bloqué par Defender). Il doit être compilé localement.
 
 ---
 
