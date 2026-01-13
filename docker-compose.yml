@@ -1,5 +1,7 @@
 services:
   trad-bot:
+    # Utilise l'image Docker Hub si disponible, sinon build local
+    image: becloud/aux-petits-oignons:latest
     build: .
     container_name: trad-bot-opencode
     volumes:
@@ -7,6 +9,8 @@ services:
       - ./clients:/app/clients
       - ./Solution:/app/Solution
       - ./conf_opencode:/app/conf_opencode_mount
+      # Partage les credentials Azure de Windows -> pas de device login !
+      - ${USERPROFILE}/.azure:/root/.azure
     ports:
       - "5545:8080"
     stdin_open: true

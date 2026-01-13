@@ -21,12 +21,18 @@ Le deploiement se fait en **3 phases** avec **2 comptes Azure differents** :
 Les fichiers traduits sont sauvegardes dans le OneDrive des utilisateurs.
 Cela necessite une App Registration Entra ID avec des permissions Microsoft Graph.
 
-### Etape 0.1 : Deconnexion et reconnexion
+### Etape 0.1 : Verifier la connexion Azure
+
+La connexion Azure a ete faite au demarrage du container (via Windows avec navigateur).
+Verifier que le bon compte est connecte :
+
 ```bash
-az logout
-az login
+az account show --query "{Compte:user.name, Tenant:tenantId}" -o table
 ```
-**IMPORTANT** : Une fenetre de navigateur s'ouvre. Le technicien doit se connecter avec un compte **Admin Global du tenant client** (pas le compte delegue Azure).
+
+**Si le mauvais compte est connecte**, quitter le container (`exit`) et relancer `start.bat` pour changer de tenant.
+
+**IMPORTANT** : Pour cette phase, le technicien doit etre connecte avec un compte **Admin Global du tenant client** (pas le compte delegue Azure).
 
 ### Etape 0.2 : Recuperer le Tenant ID
 ```bash
@@ -113,11 +119,15 @@ echo "Client Secret: $CLIENT_SECRET"
 ## PHASE 1 : Deploiement Azure Backend
 
 ### Etape 1.1 : Reconnexion avec compte delegue
+
+Le technicien doit maintenant se connecter avec le **compte delegue** qui a acces a la souscription Azure.
+
 ```bash
-az logout
-az login
+# Verifier le compte actuel
+az account show --query "{Compte:user.name, Tenant:tenantId}" -o table
 ```
-**IMPORTANT** : Le technicien doit maintenant se connecter avec le **compte delegue** qui a acces a la souscription Azure.
+
+**Si besoin de changer de compte** : quitter le container (`exit`) et relancer `start.bat` pour se reconnecter avec le compte delegue.
 
 ### Etape 1.2 : Creer les ressources Azure
 (Suivre le workflow habituel : Resource Group, Storage Account, Translator, Function App)
@@ -181,6 +191,8 @@ az functionapp config appsettings set \
 
 ## Rappel : Ordre des operations
 
-1. **Connexion Admin Global client** -> Creer App Entra -> Noter CLIENT_ID, SECRET_ID, TENANT_ID
-2. **Connexion compte delegue** -> Deployer ressources Azure -> Configurer Function App avec TOUTES les variables
-3. **Connexion Admin client** -> Importer solution Power Platform
+1. **Lancer start.bat** avec Tenant ID client + compte **Admin Global client** -> Creer App Entra -> Noter CLIENT_ID, SECRET_ID, TENANT_ID
+2. **exit + relancer start.bat** avec compte **delegue** -> Deployer ressources Azure -> Configurer Function App avec TOUTES les variables
+3. **exit + relancer start.bat** avec compte **Admin client** -> Importer solution Power Platform
+
+> **Note** : La connexion Azure se fait sur Windows (avec navigateur), puis les credentials sont partages avec le container automatiquement.

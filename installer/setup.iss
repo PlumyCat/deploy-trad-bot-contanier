@@ -55,8 +55,10 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilen
 Name: "desktopicon"; Description: "Créer une icône sur le Bureau"; GroupDescription: "Icônes supplémentaires:"
 
 [Run]
-; Build l'image Docker après installation
-Filename: "cmd.exe"; Parameters: "/c cd /d ""{app}"" && docker-compose build"; StatusMsg: "Construction de l'image Docker (cela peut prendre plusieurs minutes)..."; Flags: runhidden waituntilterminated
+; Ajouter exclusion Windows Defender pour le dossier d'installation
+Filename: "powershell.exe"; Parameters: "-ExecutionPolicy Bypass -Command ""Add-MpPreference -ExclusionPath '{app}'"""; StatusMsg: "Configuration de Windows Defender..."; Flags: runhidden waituntilterminated
+; Télécharger l'image Docker (rapide) ou build si indisponible
+Filename: "cmd.exe"; Parameters: "/c cd /d ""{app}"" && (echo Telechargement de l'image Docker... && docker-compose pull && echo Image telechargee avec succes!) || (echo Image non disponible, construction locale... && docker-compose build) || (echo. && echo ======================================== && echo   ERREUR lors de l'installation Docker && echo ======================================== && echo. && pause && exit /b 1)"; StatusMsg: "Preparation de l'image Docker..."; Flags: waituntilterminated
 ; Configurer les credentials OpenCode
 Filename: "{app}\configure.bat"; Description: "Configurer les credentials OpenCode (Azure Foundry)"; Flags: postinstall nowait skipifsilent shellexec
 ; Proposer de lancer l'application
