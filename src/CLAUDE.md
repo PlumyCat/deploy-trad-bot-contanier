@@ -1,5 +1,52 @@
 # Instructions de Deploiement - Bot Traducteur
 
+---
+
+## ⚠️ REGLES CRITIQUES - A LIRE EN PREMIER ⚠️
+
+### NE JAMAIS creer de ressources en double !
+
+**AVANT de creer une ressource Azure, TOUJOURS verifier si elle existe deja :**
+
+```bash
+# Lister les Translator existants dans la souscription
+az cognitiveservices account list --query "[?kind=='TextTranslation'].{Nom:name, SKU:sku.name, RG:resourceGroup}" -o table
+
+# Lister les Storage Accounts
+az storage account list --query "[].{Nom:name, RG:resourceGroup}" -o table
+
+# Lister les Function Apps
+az functionapp list --query "[].{Nom:name, RG:resourceGroup}" -o table
+```
+
+### Azure Translator : TOUJOURS utiliser F0 (gratuit) !
+
+- **F0** = Gratuit (2M caracteres/mois)
+- **S1** = Payant (~35$/mois) ❌ NE PAS UTILISER SAUF DEMANDE EXPLICITE
+
+**Si un Translator F0 existe deja** → Reutiliser ses credentials, NE PAS en creer un nouveau !
+
+```bash
+# Recuperer les credentials d'un Translator existant
+TRANSLATOR_NAME="nom-du-translator-existant"
+RESOURCE_GROUP="son-resource-group"
+
+TRANSLATOR_KEY=$(az cognitiveservices account keys list \
+  --name $TRANSLATOR_NAME \
+  --resource-group $RESOURCE_GROUP \
+  --query key1 -o tsv)
+
+TRANSLATOR_ENDPOINT=$(az cognitiveservices account show \
+  --name $TRANSLATOR_NAME \
+  --resource-group $RESOURCE_GROUP \
+  --query properties.endpoint -o tsv)
+
+echo "TRANSLATOR_KEY: $TRANSLATOR_KEY"
+echo "TRANSLATOR_ENDPOINT: $TRANSLATOR_ENDPOINT"
+```
+
+---
+
 ## Workflow de Deploiement Complet
 
 Le deploiement se fait en **3 phases** avec **2 comptes Azure differents** :
@@ -129,10 +176,52 @@ az account show --query "{Compte:user.name, Tenant:tenantId}" -o table
 
 **Si besoin de changer de compte** : quitter le container (`exit`) et relancer `start.bat` pour se reconnecter avec le compte delegue.
 
-### Etape 1.2 : Creer les ressources Azure
-(Suivre le workflow habituel : Resource Group, Storage Account, Translator, Function App)
+### Etape 1.2 : Verifier les ressources existantes
 
-### Etape 1.3 : Configurer les variables d'environnement
+**⚠️ OBLIGATOIRE avant toute creation :**
+
+```bash
+# Selectionner la souscription
+az account list --query "[].{Nom:name, ID:id, Defaut:isDefault}" -o table
+az account set --subscription "ID-de-la-souscription"
+
+# Verifier les Translator existants (NE PAS CREER SI F0 EXISTE !)
+az cognitiveservices account list --query "[?kind=='TextTranslation'].{Nom:name, SKU:sku.name, RG:resourceGroup}" -o table
+```
+
+**Si un Translator F0 existe** → utiliser celui-la, passer a l'etape 1.4
+
+### Etape 1.3 : Creer les ressources Azure (seulement si necessaire)
+
+**Translator** (seulement si aucun F0 n'existe) :
+```bash
+az cognitiveservices account create \
+  --name "translator-$CLIENT_NAME" \
+  --resource-group $RESOURCE_GROUP \
+  --kind TextTranslation \
+  --sku F0 \
+  --location francecentral \
+  --yes
+```
+
+> ⚠️ **TOUJOURS utiliser `--sku F0`** (gratuit). Ne JAMAIS utiliser S1 sauf demande explicite du client.
+
+### Etape 1.4 : Recuperer les credentials du Translator
+
+```bash
+# Adapter TRANSLATOR_NAME au nom reel (existant ou nouvellement cree)
+TRANSLATOR_KEY=$(az cognitiveservices account keys list \
+  --name $TRANSLATOR_NAME \
+  --resource-group $RESOURCE_GROUP \
+  --query key1 -o tsv)
+
+TRANSLATOR_ENDPOINT=$(az cognitiveservices account show \
+  --name $TRANSLATOR_NAME \
+  --resource-group $RESOURCE_GROUP \
+  --query properties.endpoint -o tsv)
+```
+
+### Etape 1.5 : Configurer les variables d'environnement
 Lors de la configuration de la Function App, inclure les variables OneDrive :
 
 ```bash
