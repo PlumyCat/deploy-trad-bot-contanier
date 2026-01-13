@@ -15,25 +15,29 @@ Téléchargez et installez Docker Desktop :
 
 > ⚠️ **Important** : Redémarrez votre ordinateur après l'installation de Docker.
 
-### Étape 2 : Préparer Windows Defender (optionnel)
+### Étape 2 : Compiler l'installeur
 
-> **Note** : L'installeur ajoute automatiquement une exclusion pour le dossier d'installation. Cette étape manuelle n'est nécessaire que si vous rencontrez des problèmes.
+> ⚠️ **L'exe n'est pas inclus dans le repo** (non signé = bloqué par Defender)
 
-Si besoin, exécutez cette commande dans **PowerShell (Administrateur)** :
+1. Installer [Inno Setup](https://jrsoftware.org/isdl.php)
+2. Ouvrir `installer/setup.iss`
+3. Build → Compile (Ctrl+F9)
+4. L'exe est généré dans `installer/output/`
+
+### Étape 3 : Préparer Windows Defender
+
+**Avant de lancer l'installeur**, exécuter dans **PowerShell (Administrateur)** :
 
 ```powershell
-Add-MpPreference -ExclusionPath "C:\Program Files\AuxPetitsOignons", "$env:USERPROFILE\Desktop", "$env:LOCALAPPDATA\Temp"
-Add-MpPreference -ExclusionProcess "unins000.exe"
+# Exclure le dossier contenant l'exe ET le dossier d'installation
+Add-MpPreference -ExclusionPath "$env:USERPROFILE\Desktop", "C:\Program Files\AuxPetitsOignons", "C:\Program Files (x86)\AuxPetitsOignons"
 ```
 
-### Étape 3 : Lancer l'installeur
+### Étape 4 : Lancer l'installeur
 
-L'installeur se trouve dans :
-```
-installer/output/AuxPetitsOignons_Setup.exe
-```
+Double-cliquez sur `installer/output/AuxPetitsOignons_Setup.exe` 🧅
 
-Double-cliquez et laissez-vous guider ! 🧅
+> **Note** : La configuration des credentials OpenCode nécessite les droits admin (écriture dans Program Files).
 
 ---
 
@@ -112,12 +116,6 @@ docker push becloud/aux-petits-oignons:latest
 ```
 
 Une fois publiée, l'installeur téléchargera l'image (~2 min) au lieu de la construire (~20 min).
-
-### Recompiler l'installeur
-
-1. Installer [Inno Setup](https://jrsoftware.org/isdl.php)
-2. Ouvrir `installer/setup.iss`
-3. Build → Compile (Ctrl+F9)
 
 ---
 

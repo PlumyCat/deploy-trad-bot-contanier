@@ -2,6 +2,51 @@
 
 ---
 
+## 🔑 COMPTES AZURE - COMPRENDRE LA DIFFERENCE
+
+### Compte delegue (Be-Cloud)
+- **in-the-cloud.fr** : pour les clients directs
+- **becsp.onmicrosoft.com** : pour les clients partenaires
+- Utilise pour : deployer les ressources Azure (Phase 1)
+
+### Compte Admin Client
+- Cree depuis le **Partner Center**
+- Doit etre **Administrateur Global** du tenant client
+- Utilise pour : App Entra ID (Phase 0) et Power Platform (Phase 2)
+
+---
+
+## 📋 CREDENTIALS POUR POWER PLATFORM
+
+A la fin du deploiement, le technicien a besoin de **seulement 2 infos** pour configurer la solution Power Platform :
+
+### 1. Storage Account (pour importer les documents)
+```bash
+echo "CONTAINER_NAME: doc-to-trad"
+echo "STORAGE_KEY: $STORAGE_KEY"
+```
+
+### 2. Function App (URL de l'API)
+```bash
+FUNCTION_URL=$(az functionapp show --name $FUNCTION_APP_NAME --resource-group $RESOURCE_GROUP --query defaultHostName -o tsv)
+FUNCTION_KEY=$(az functionapp keys list --name $FUNCTION_APP_NAME --resource-group $RESOURCE_GROUP --query functionKeys.default -o tsv)
+
+echo "========================================"
+echo "  CREDENTIALS POUR POWER PLATFORM"
+echo "========================================"
+echo ""
+echo "Function URL: https://$FUNCTION_URL/api"
+echo "Function Key: $FUNCTION_KEY"
+echo ""
+echo "Container:    doc-to-trad"
+echo "Storage Key:  $STORAGE_KEY"
+echo "========================================"
+```
+
+> ⚠️ **Afficher ces credentials a la fin de la Phase 1** pour que le technicien puisse configurer Power Platform.
+
+---
+
 ## ⚠️ REGLES CRITIQUES - A LIRE EN PREMIER ⚠️
 
 ### NE JAMAIS creer de ressources en double !
@@ -241,6 +286,35 @@ az functionapp config appsettings set \
     "TENANT_ID=$TENANT_ID" \
     "ONEDRIVE_UPLOAD_ENABLED=true" \
     "ONEDRIVE_FOLDER=Translated Documents"
+```
+
+### Etape 1.6 : Afficher les credentials pour Power Platform
+
+**⚠️ OBLIGATOIRE - Afficher ces infos au technicien :**
+
+```bash
+FUNCTION_URL=$(az functionapp show --name $FUNCTION_APP_NAME --resource-group $RESOURCE_GROUP --query defaultHostName -o tsv)
+FUNCTION_KEY=$(az functionapp keys list --name $FUNCTION_APP_NAME --resource-group $RESOURCE_GROUP --query functionKeys.default -o tsv)
+
+echo ""
+echo "========================================"
+echo "  ✅ PHASE 1 TERMINEE"
+echo "========================================"
+echo ""
+echo "  Credentials pour Power Platform :"
+echo ""
+echo "  Function URL: https://$FUNCTION_URL/api"
+echo "  Function Key: $FUNCTION_KEY"
+echo ""
+echo "  Container:    doc-to-trad"
+echo "  Storage Key:  $STORAGE_KEY"
+echo ""
+echo "========================================"
+echo ""
+echo "  Prochaine etape : Phase 2 (navigateur)"
+echo "  Ouvrir : http://localhost:5545/procedure"
+echo ""
+echo "========================================"
 ```
 
 ---
