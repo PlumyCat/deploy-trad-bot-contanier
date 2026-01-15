@@ -1,0 +1,5 @@
+# Configuration du repository source
+# Modifiez cette URL pour pointer vers votre repo GitHub
+
+REPO_URL=https://github.com/PlumyCat/trad-bot-src.git
+REPO_BRANCH=main

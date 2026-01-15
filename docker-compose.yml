@@ -5,9 +5,12 @@ services:
     build: .
     container_name: trad-bot-opencode
     volumes:
-      - ./src:/app/src
-      - ./clients:/app/clients
-      - ./Solution:/app/Solution
+      # Code source (clone depuis GitHub dans C:\AuxPetitsOignons\src)
+      - C:/AuxPetitsOignons/src:/app/src
+      # Donnees client
+      - C:/AuxPetitsOignons/clients:/app/clients
+      - C:/AuxPetitsOignons/Solution:/app/Solution
+      # Configuration OpenCode
       - ./conf_opencode:/app/conf_opencode_mount
       # Partage les credentials Azure de Windows -> pas de device login !
       - ${USERPROFILE}/.azure:/root/.azure

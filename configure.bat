@@ -2,14 +2,15 @@
 chcp 65001 >nul
 echo.
 echo ========================================
-echo   🧅 Aux Petits Oignons - Configuration
+echo   Aux Petits Oignons - Configuration
 echo ========================================
 echo.
 
-set "CONFIG_FILE=%~dp0conf_opencode\.env"
+set "SCRIPT_DIR=%~dp0"
+set "ENCRYPTED_FILE=%SCRIPT_DIR%conf_opencode\credentials.encrypted"
 
-if exist "%CONFIG_FILE%" (
-    echo Configuration existante detectee.
+if exist "%ENCRYPTED_FILE%" (
+    echo Configuration existante detectee (chiffree).
     echo.
     set /p OVERWRITE="Voulez-vous la modifier ? (O/N) : "
     if /i "%OVERWRITE%"=="N" (
@@ -42,17 +43,44 @@ echo.
 set /p TAVILY_KEY="TAVILY_API_KEY : "
 
 echo.
-echo Enregistrement de la configuration...
-
-(
-echo ANTHROPIC_API_KEY=%API_KEY%
-echo ANTHROPIC_BASE_URL=%BASE_URL%
-echo TAVILY_API_KEY=%TAVILY_KEY%
-) > "%CONFIG_FILE%"
-
+echo Chiffrement des credentials...
 echo.
-echo ✓ Configuration enregistree dans conf_opencode\.env
-echo.
+
+:: Appeler le script PowerShell de chiffrement
+powershell.exe -ExecutionPolicy Bypass -File "%SCRIPT_DIR%scripts\encrypt-credentials.ps1" ^
+    -AnthropicApiKey "%API_KEY%" ^
+    -AnthropicBaseUrl "%BASE_URL%" ^
+    -TavilyApiKey "%TAVILY_KEY%" ^
+    -OutputPath "%SCRIPT_DIR%conf_opencode"
+
+if errorlevel 1 (
+    echo.
+    echo ========================================
+    echo   ERREUR lors du chiffrement
+    echo ========================================
+    echo.
+    echo Tentative de sauvegarde en mode compatible...
+    echo.
+
+    :: Fallback: sauvegarder en clair si le chiffrement echoue
+    (
+        echo ANTHROPIC_API_KEY=%API_KEY%
+        echo ANTHROPIC_BASE_URL=%BASE_URL%
+        echo TAVILY_API_KEY=%TAVILY_KEY%
+    ) > "%SCRIPT_DIR%conf_opencode\.env"
+
+    echo Configuration sauvegardee en mode non-chiffre.
+    echo Pour plus de securite, relancez configure.bat.
+) else (
+    echo.
+    echo ========================================
+    echo   Configuration chiffree avec succes
+    echo ========================================
+    echo.
+    echo Vos credentials sont proteges par DPAPI Windows.
+    echo Ils ne peuvent etre utilises que par votre compte utilisateur.
+)
 
 :end
+echo.
 pause
