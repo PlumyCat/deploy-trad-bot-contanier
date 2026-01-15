@@ -7,7 +7,7 @@
 #define MyAppPublisher "Be-Cloud"
 #define MyAppURL "https://be-cloud.fr"
 #define MyAppExeName "start.bat"
-#define MyDataDir "C:\AuxPetitsOignons"
+#define MyDataDir "{%USERPROFILE}\AuxPetitsOignons"
 
 [Setup]
 AppId={{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}
@@ -25,7 +25,7 @@ UninstallDisplayIcon={app}\oignon.ico
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
-PrivilegesRequired=admin
+PrivilegesRequired=lowest
 
 [Languages]
 Name: "french"; MessagesFile: "compiler:Languages\French.isl"
@@ -51,9 +51,8 @@ Source: "..\configure.bat"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\repo-config.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\icone\oignon.ico"; DestDir: "{app}"; Flags: ignoreversion
 
-; Fichiers dans le dossier de donnees (C:\AuxPetitsOignons)
-Source: "..\clients\*"; DestDir: "{#MyDataDir}\clients"; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist onlyifdoesntexist
-Source: "..\Solution\*"; DestDir: "{#MyDataDir}\Solution"; Flags: ignoreversion recursesubdirs createallsubdirs
+; Les dossiers clients/ et Solution/ seront crees par start.bat
+; et remplis automatiquement par le container via les volumes Docker
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\oignon.ico"; WorkingDir: "{app}"
@@ -66,27 +65,13 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilen
 
 [Tasks]
 Name: "desktopicon"; Description: "Créer une icône sur le Bureau"; GroupDescription: "Icônes supplémentaires:"
-Name: "defenderexclusion"; Description: "Ajouter les exclusions Windows Defender (recommandé)"; GroupDescription: "Sécurité:"; Flags: checkedonce
 
 [Run]
-; Exclusions Windows Defender (multiples chemins)
-Filename: "powershell.exe"; Parameters: "-ExecutionPolicy Bypass -Command ""Add-MpPreference -ExclusionPath '{app}', '{#MyDataDir}', '$env:USERPROFILE\.opencode'"""; StatusMsg: "Configuration de Windows Defender..."; Flags: runhidden waituntilterminated; Tasks: defenderexclusion
-
-; Exclure aussi les processus Docker si necessaire
-Filename: "powershell.exe"; Parameters: "-ExecutionPolicy Bypass -Command ""try {{ Add-MpPreference -ExclusionProcess 'docker.exe', 'dockerd.exe', 'com.docker.backend.exe' }} catch {{}}"""; StatusMsg: "Exclusion des processus Docker..."; Flags: runhidden waituntilterminated; Tasks: defenderexclusion
-
-; Telecharger l'image Docker (rapide) ou build si indisponible
-Filename: "cmd.exe"; Parameters: "/c cd /d ""{app}"" && (echo Telechargement de l'image Docker... && docker-compose pull && echo Image telechargee avec succes!) || (echo Image non disponible, construction locale... && docker-compose build) || (echo. && echo ======================================== && echo   ERREUR lors de l'installation Docker && echo ======================================== && echo. && pause && exit /b 1)"; StatusMsg: "Preparation de l'image Docker..."; Flags: waituntilterminated
-
-; Configurer les credentials OpenCode
-Filename: "{app}\configure.bat"; Description: "Configurer les credentials OpenCode (Azure Foundry)"; Flags: postinstall nowait skipifsilent shellexec
-
-; Proposer de lancer l'application
-Filename: "{app}\{#MyAppExeName}"; Description: "Lancer {#MyAppName}"; Flags: postinstall nowait skipifsilent unchecked shellexec
+; Note: La configuration se fait maintenant depuis le menu Demarrer
 
 [UninstallRun]
 ; Supprimer les exclusions Defender a la desinstallation
-Filename: "powershell.exe"; Parameters: "-ExecutionPolicy Bypass -Command ""try {{ Remove-MpPreference -ExclusionPath '{app}', '{#MyDataDir}' }} catch {{}}"""; Flags: runhidden waituntilterminated
+Filename: "powershell.exe"; Parameters: "-ExecutionPolicy Bypass -Command ""try {{ Remove-MpPreference -ExclusionPath '{app}', '$env:LOCALAPPDATA\Programs\AuxPetitsOignons', '{#MyDataDir}', '$env:USERPROFILE\AppData\AuxPetitsOignons', '$env:USERPROFILE\.opencode'; Remove-MpPreference -ExclusionProcess 'docker.exe', 'dockerd.exe', 'com.docker.backend.exe' }} catch {{}}"""; RunOnceId: "RemoveDefenderExclusions"; Flags: runhidden waituntilterminated
 
 [Code]
 function IsDockerInstalled(): Boolean;
@@ -174,12 +159,20 @@ begin
       'Dossier de données "Aux Petits Oignons"' + #13#10 +
       '========================================' + #13#10 + #13#10 +
       'clients/   - Rapports de déploiement par client' + #13#10 +
-      'Solution/  - Solutions Power Platform à importer' + #13#10 +
-      'src/       - Code source (téléchargé depuis GitHub)' + #13#10 + #13#10 +
+      'Solution/  - Solutions Power Platform à importer' + #13#10 + #13#10 +
       'Application installée dans: ' + ExpandConstant('{app}') + #13#10 + #13#10 +
-      'Le code source est automatiquement mis à jour' + #13#10 +
-      'depuis GitHub à chaque lancement.' + #13#10,
+      'Le code source est intégré dans le container Docker.' + #13#10 +
+      'Seules les données utilisateur sont stockées ici.' + #13#10,
       False);
+
+    // Message informatif apres installation
+    MsgBox('Installation terminée avec succès !' + #13#10 + #13#10 +
+           'Prochaines étapes :' + #13#10 +
+           '1. Lancez "Configuration" depuis le menu Démarrer' + #13#10 +
+           '2. Entrez vos clés API (Azure Foundry et Tavily)' + #13#10 +
+           '3. Lancez "Aux petits oignons" pour démarrer' + #13#10 + #13#10 +
+           'Tous les raccourcis sont disponibles dans le menu Démarrer.',
+           mbInformation, MB_OK);
   end;
 end;
 
@@ -188,7 +181,8 @@ begin
   if CurUninstallStep = usPostUninstall then
   begin
     // Demander si on doit supprimer le dossier de donnees
-    if MsgBox('Voulez-vous supprimer le dossier de données C:\AuxPetitsOignons ?' + #13#10 + #13#10 +
+    if MsgBox('Voulez-vous supprimer le dossier de données ?' + #13#10 +
+              ExpandConstant('{#MyDataDir}') + #13#10 + #13#10 +
               'Ce dossier contient les rapports clients, les solutions Power Platform' + #13#10 +
               'et le code source téléchargé.',
               mbConfirmation, MB_YESNO) = IDYES then

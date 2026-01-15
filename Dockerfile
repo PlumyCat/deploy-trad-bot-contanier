@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y \
     curl \
     wget \
     git \
+    rsync \
     gnupg \
     lsb-release \
     software-properties-common \
@@ -79,14 +80,10 @@ RUN if [ ! -f /root/.config/opencode/.env ]; then \
     cp /root/.config/opencode/.env.example /root/.config/opencode/.env 2>/dev/null || true; \
     fi
 
-# Copy project source
-COPY src/ /app/src/
+# Source code will be cloned from GitHub at runtime by entrypoint.sh
 
 # Copy documentation server
 COPY doc_server.py /app/doc_server.py
-
-# Create clients directory
-RUN mkdir -p /app/clients
 
 # Activate venv by default
 ENV VIRTUAL_ENV=/app/venv
