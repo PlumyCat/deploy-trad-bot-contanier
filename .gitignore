@@ -1,5 +1,6 @@
 # Secrets
 conf_opencode/.env
+conf_opencode/credentials.encrypted
 
 # Docker
 *.log
