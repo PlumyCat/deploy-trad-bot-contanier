@@ -148,6 +148,10 @@ echo   Session terminee
 echo ========================================
 echo(
 
+:: Arreter le container
+echo Arret du container..
+docker-compose down >nul 2>&1
+
 :: Supprimer le fichier .env en clair si on a un fichier chiffre
 if exist "%ENCRYPTED_FILE%" (
     if exist "%CONFIG_FILE%" (
