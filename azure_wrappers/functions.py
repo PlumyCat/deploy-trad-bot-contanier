@@ -117,7 +117,7 @@ def create_function_app(
 
     try:
         result = run_az_command(cmd)
-        data = json.loads(result)
+        data = json.loads(result["stdout"])
 
         # Extraire les informations principales
         function_app_info = {
@@ -266,7 +266,7 @@ def deploy_functions(
         ]
 
         result = run_az_command(cmd)
-        data = json.loads(result)
+        data = json.loads(result["stdout"])
 
         # Nettoyer le fichier ZIP temporaire
         os.remove(zip_path)
@@ -432,7 +432,7 @@ def verify_function_app(
 
     try:
         result = run_az_command(cmd)
-        data = json.loads(result)
+        data = json.loads(result["stdout"])
 
         # Lister les functions déployées
         functions_list = _list_deployed_functions(name, resource_group)
@@ -475,7 +475,7 @@ def _list_deployed_functions(name: str, resource_group: str) -> List[str]:
 
     try:
         result = run_az_command(cmd)
-        data = json.loads(result)
+        data = json.loads(result["stdout"])
         return [f.get("name", "") for f in data]
     except:
         return []

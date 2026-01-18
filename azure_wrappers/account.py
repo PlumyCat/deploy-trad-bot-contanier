@@ -201,7 +201,7 @@ def list_accounts() -> List[Dict[str, Any]]:
 
     try:
         result = run_az_command(cmd)
-        accounts = json.loads(result)
+        accounts = json.loads(result["stdout"])
 
         # Formater les informations
         formatted_accounts = []
@@ -246,7 +246,7 @@ def get_current_account() -> Dict[str, Any]:
 
     try:
         result = run_az_command(cmd)
-        account = json.loads(result)
+        account = json.loads(result["stdout"])
 
         return {
             "id": account.get("id", ""),
@@ -383,7 +383,7 @@ def check_permissions(subscription_id: Optional[str] = None) -> Dict[str, Any]:
 
     try:
         result = run_az_command(cmd)
-        assignments = json.loads(result)
+        assignments = json.loads(result["stdout"])
 
         # Extraire les rôles
         user_roles = [assignment.get("roleDefinitionName", "") for assignment in assignments]
