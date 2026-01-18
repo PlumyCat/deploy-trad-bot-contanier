@@ -87,7 +87,7 @@ sprints:
     end_date: "2026-02-14"
     capacity_points: 30
     committed_points: 26
-    completed_points: 10
+    completed_points: 18
     status: "in_progress"
     goal: "Implémenter l'automatisation complète du déploiement Azure avec Storage, Translator F0, et Functions"
     stories:
@@ -110,10 +110,11 @@ sprints:
       - story_id: "STORY-008"
         title: "Wrapper Python Azure CLI - Déploiement Azure Functions"
         points: 8
-        status: "not_started"
+        status: "completed"
         assigned_to: "Eric"
         epic: "EPIC-002"
         priority: "Must Have"
+        completed_date: "2026-01-18"
       - story_id: "STORY-009"
         title: "Support Multi-comptes Azure dans OpenCode"
         points: 3
