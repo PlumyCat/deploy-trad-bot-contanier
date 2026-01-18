@@ -31,7 +31,53 @@ from .common import sanitize_credential
 # ============================================
 
 REPORT_DIR = "rapports"
-REPORT_TEMPLATE_SIMPLE = """
+
+# Template simple compatible ticketing (ASCII uniquement, compact < 50 lignes)
+REPORT_TEMPLATE_PLAIN = """
+================================================================================
+RAPPORT D'INTERVENTION - Bot Traducteur Copilot
+================================================================================
+Client: {client_name} | Technicien: {technician_name} | Date: {date} {time}
+Duree: {duration} | Region: {region}
+
+RESSOURCES AZURE DEPLOYEES
+Resource Group: {resource_group} | Subscription: {subscription_id}
+{services_list}
+
+AZURE STORAGE
+Nom: {storage_name} | SKU: {storage_sku} | Container: {blob_container}
+Endpoint: {storage_endpoint}
+AZURE TRANSLATOR (GRATUIT F0 - 2M caracteres/mois)
+Nom: {translator_name} | Region: {translator_region}
+Endpoint: {translator_endpoint}
+AZURE FUNCTIONS ({function_count} fonctions)
+Nom: {function_app_name} | Runtime: Python {function_runtime_version}
+URL: {function_app_url} | Status: {health_status}
+{functions_list}
+
+CONFIGURATION POWER PLATFORM
+Solution: BotCopilotTraducteur_1_0_0_4.zip
+Variables requises:
+  - AZURE_FUNCTION_URL: {function_app_url}
+  - CLIENT_ID: [A configurer dans Entra ID]
+  - TENANT_ID: {tenant_id}
+
+PROCHAINES ETAPES
+1. Creer App Registration Entra ID (OneDrive)
+2. Importer solution Power Platform
+3. Configurer variables environnement Copilot Studio
+4. Tester avec document exemple
+5. Valider avec utilisateur final
+Doc: http://localhost:5545/procedure
+
+NOTES: {notes}
+================================================================================
+Deploiement Aux Petits Oignons | {report_timestamp}
+================================================================================
+"""
+
+# Template avec caractères box-drawing Unicode (plus esthétique)
+REPORT_TEMPLATE_FANCY = """
 ╔══════════════════════════════════════════════════════════════════════════╗
 ║                    RAPPORT D'INTERVENTION                                ║
 ║                 Déploiement Bot Traducteur Copilot                       ║
@@ -145,6 +191,7 @@ def generate_report(
     tenant_id: Optional[str] = None,
     deployment_duration: Optional[str] = "Non calculé",
     notes: Optional[str] = "",
+    template_style: str = "plain",
 ) -> Dict[str, Any]:
     """
     Génère un rapport d'intervention complet après déploiement Azure.
@@ -161,6 +208,7 @@ def generate_report(
         tenant_id: ID du tenant Azure AD
         deployment_duration: Durée totale du déploiement (ex: "15 minutes")
         notes: Notes techniques additionnelles
+        template_style: Style de template ("plain" = ASCII uniquement, "fancy" = Unicode box-drawing)
 
     Returns:
         Dict avec:
@@ -168,9 +216,10 @@ def generate_report(
             - report_path: Chemin vers le fichier sauvegardé
             - timestamp: Timestamp de génération
             - client_name: Nom du client
+            - template_style: Style utilisé
 
     Raises:
-        ValueError: Si informations obligatoires manquantes
+        ValueError: Si informations obligatoires manquantes ou template_style invalide
     """
     # Validation des inputs
     if not client_name:
@@ -179,6 +228,8 @@ def generate_report(
         raise ValueError("Le nom du Resource Group est requis")
     if not storage_info or not translator_info or not function_app_info:
         raise ValueError("Les informations de déploiement sont incomplètes")
+    if template_style not in ("plain", "fancy"):
+        raise ValueError(f"template_style invalide: '{template_style}'. Valeurs: 'plain' ou 'fancy'")
 
     # Timestamp
     now = datetime.now()
@@ -212,14 +263,21 @@ def generate_report(
     function_app_hostname = function_app_info.get("default_hostname", "N/A")
     function_app_url = f"https://{function_app_hostname}" if function_app_hostname != "N/A" else "N/A"
 
-    # Liste des services déployés
-    services = [
-        "✓ Azure Storage Account (stockage documents)",
-        "✓ Azure Translator F0 (traduction gratuite)",
-        "✓ Azure Functions App (backend API)"
-    ]
+    # Liste des services déployés (avec ou sans emojis selon style)
+    if template_style == "plain":
+        services = [
+            "  - Azure Storage Account (stockage documents)",
+            "  - Azure Translator F0 (traduction gratuite)",
+            "  - Azure Functions App (backend API)"
+        ]
+    else:  # fancy
+        services = [
+            "✓ Azure Storage Account (stockage documents)",
+            "✓ Azure Translator F0 (traduction gratuite)",
+            "✓ Azure Functions App (backend API)"
+        ]
     service_count = len(services)
-    services_list = "\n  ".join(services)
+    services_list = "\n  ".join(services) if template_style == "fancy" else "\n".join(services)
 
     # Liste des fonctions déployées
     expected_functions = [
@@ -231,18 +289,31 @@ def generate_report(
         "formats"
     ]
     function_count = len(expected_functions)
-    functions_list = "\n    • ".join(expected_functions)
-    functions_list = "    • " + functions_list
+    if template_style == "plain":
+        functions_list = "\n    - ".join(expected_functions)
+        functions_list = "    - " + functions_list
+    else:  # fancy
+        functions_list = "\n    • ".join(expected_functions)
+        functions_list = "    • " + functions_list
 
-    # Health check status
-    health_status = "✓ OK" if function_app_info.get("state") == "Running" else "⚠ À vérifier"
+    # Health check status (avec ou sans emojis)
+    if template_style == "plain":
+        health_status = "OK" if function_app_info.get("state") == "Running" else "A verifier"
+    else:  # fancy
+        health_status = "✓ OK" if function_app_info.get("state") == "Running" else "⚠ À vérifier"
 
-    # Notes par défaut si vides
+    # Notes par défaut si vides (version compacte)
     if not notes:
-        notes = f"Déploiement standard réalisé avec succès.\n  Tous les services sont opérationnels.\n  Région: {region}"
+        if template_style == "plain":
+            notes = f"Deploiement standard reussi. Tous services operationnels. Region: {region}"
+        else:  # fancy
+            notes = f"Déploiement standard réalisé avec succès.\n  Tous les services sont opérationnels.\n  Région: {region}"
+
+    # Sélectionner le template selon le style
+    template = REPORT_TEMPLATE_PLAIN if template_style == "plain" else REPORT_TEMPLATE_FANCY
 
     # Générer le rapport
-    report_content = REPORT_TEMPLATE_SIMPLE.format(
+    report_content = template.format(
         client_name=client_name,
         technician_name=technician_name,
         date=date_str,
@@ -280,6 +351,7 @@ def generate_report(
         "report_path": report_path,
         "timestamp": timestamp_display,
         "client_name": client_name,
+        "template_style": template_style,
     }
 
 

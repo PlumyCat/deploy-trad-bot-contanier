@@ -479,3 +479,198 @@ class TestSTORY015AcceptanceCriteria:
 
         assert regenerated["exists"] is True
         assert regenerated["report_content"] == original_content
+
+
+# ============================================
+# Tests: STORY-016 Acceptance Criteria
+# ============================================
+
+class TestSTORY016AcceptanceCriteria:
+    """Tests de validation des critères d'acceptation STORY-016"""
+
+    def test_acceptance_criteria_1_plain_template_exists(
+        self,
+        sample_storage_info,
+        sample_translator_info,
+        sample_function_app_info,
+        temp_report_dir
+    ):
+        """AC1: Template texte avec sections claires créé"""
+        from azure_wrappers.report_generator import REPORT_TEMPLATE_PLAIN
+        assert REPORT_TEMPLATE_PLAIN is not None
+        assert len(REPORT_TEMPLATE_PLAIN) > 0
+
+        # Vérifier que template_style="plain" fonctionne
+        result = generate_report(
+            client_name="ClientTest",
+            resource_group="rg-test",
+            region="francecentral",
+            storage_info=sample_storage_info,
+            translator_info=sample_translator_info,
+            function_app_info=sample_function_app_info,
+            template_style="plain"
+        )
+        assert result["template_style"] == "plain"
+
+    def test_acceptance_criteria_2_required_sections_present(
+        self,
+        sample_storage_info,
+        sample_translator_info,
+        sample_function_app_info,
+        temp_report_dir
+    ):
+        """AC2: Sections requises présentes (En-tête, Services, URLs, Config, Notes)"""
+        result = generate_report(
+            client_name="ClientTest",
+            resource_group="rg-test",
+            region="francecentral",
+            storage_info=sample_storage_info,
+            translator_info=sample_translator_info,
+            function_app_info=sample_function_app_info,
+            template_style="plain"
+        )
+
+        content = result["report_content"]
+
+        # Vérifier sections requises
+        assert "INFORMATIONS GENERALES" in content or "RAPPORT D'INTERVENTION" in content  # En-tête
+        assert "RESSOURCES AZURE DEPLOYEES" in content or "Services deployes" in content  # Services
+        assert "https://" in content  # URLs/Endpoints
+        assert "CONFIGURATION POWER PLATFORM" in content or "Variables d'environnement" in content  # Config
+        assert "NOTES TECHNIQUES" in content or "NOTES:" in content  # Notes (version longue ou compacte)
+
+    def test_acceptance_criteria_3_copy_paste_compatible(
+        self,
+        sample_storage_info,
+        sample_translator_info,
+        sample_function_app_info,
+        temp_report_dir
+    ):
+        """AC3: Format compatible copier-coller dans tickets"""
+        result = generate_report(
+            client_name="ClientTest",
+            resource_group="rg-test",
+            region="francecentral",
+            storage_info=sample_storage_info,
+            translator_info=sample_translator_info,
+            function_app_info=sample_function_app_info,
+            template_style="plain"
+        )
+
+        content = result["report_content"]
+
+        # Vérifier que le rapport est du texte brut
+        assert isinstance(content, str)
+        assert len(content) > 100
+
+        # Vérifier pas de balises HTML
+        assert "<html>" not in content.lower()
+        assert "<div>" not in content.lower()
+
+    def test_acceptance_criteria_4_no_special_characters(
+        self,
+        sample_storage_info,
+        sample_translator_info,
+        sample_function_app_info,
+        temp_report_dir
+    ):
+        """AC4: Pas de caractères spéciaux qui cassent le formatage (template plain)"""
+        result = generate_report(
+            client_name="ClientTest",
+            resource_group="rg-test",
+            region="francecentral",
+            storage_info=sample_storage_info,
+            translator_info=sample_translator_info,
+            function_app_info=sample_function_app_info,
+            template_style="plain"
+        )
+
+        content = result["report_content"]
+
+        # Vérifier absence de caractères box-drawing Unicode
+        assert "╔" not in content
+        assert "║" not in content
+        assert "═" not in content
+        assert "╚" not in content
+        assert "┌" not in content
+        assert "┐" not in content
+        assert "└" not in content
+        assert "┘" not in content
+        assert "─" not in content
+        assert "│" not in content
+
+        # Vérifier que seuls des caractères ASCII simples sont utilisés
+        # (permettre accents français mais pas box-drawing)
+        for char in content:
+            # Autoriser: lettres, chiffres, ponctuation, espaces, accents français
+            # Refuser: box-drawing et autres Unicode exotiques
+            if ord(char) > 127:  # Non-ASCII
+                # Autoriser les caractères français courants
+                allowed_non_ascii = "éèêëàâäïîôùûüÿçÉÈÊËÀÂÄÏÎÔÙÛÜŸÇ"
+                assert char in allowed_non_ascii, f"Caractère non-ASCII inattendu: {char} (ord={ord(char)})"
+
+    def test_acceptance_criteria_5_reasonable_length(
+        self,
+        sample_storage_info,
+        sample_translator_info,
+        sample_function_app_info,
+        temp_report_dir
+    ):
+        """AC5: Longueur raisonnable (< 50 lignes)"""
+        result = generate_report(
+            client_name="ClientTest",
+            resource_group="rg-test",
+            region="francecentral",
+            storage_info=sample_storage_info,
+            translator_info=sample_translator_info,
+            function_app_info=sample_function_app_info,
+            template_style="plain"
+        )
+
+        content = result["report_content"]
+        lines = content.split("\n")
+
+        # Le template plain devrait avoir moins de 50 lignes
+        assert len(lines) < 50, f"Rapport trop long: {len(lines)} lignes (limite: 50)"
+
+    def test_fancy_template_still_works(
+        self,
+        sample_storage_info,
+        sample_translator_info,
+        sample_function_app_info,
+        temp_report_dir
+    ):
+        """Test: Le template fancy fonctionne toujours"""
+        result = generate_report(
+            client_name="ClientTest",
+            resource_group="rg-test",
+            region="francecentral",
+            storage_info=sample_storage_info,
+            translator_info=sample_translator_info,
+            function_app_info=sample_function_app_info,
+            template_style="fancy"
+        )
+
+        assert result["template_style"] == "fancy"
+        content = result["report_content"]
+
+        # Vérifier présence de caractères box-drawing
+        assert "╔" in content or "║" in content or "═" in content
+
+    def test_invalid_template_style_raises_error(
+        self,
+        sample_storage_info,
+        sample_translator_info,
+        sample_function_app_info
+    ):
+        """Test: Erreur si template_style invalide"""
+        with pytest.raises(ValueError, match="template_style invalide"):
+            generate_report(
+                client_name="ClientTest",
+                resource_group="rg-test",
+                region="francecentral",
+                storage_info=sample_storage_info,
+                translator_info=sample_translator_info,
+                function_app_info=sample_function_app_info,
+                template_style="invalid"
+            )
