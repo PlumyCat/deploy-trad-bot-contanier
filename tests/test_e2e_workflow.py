@@ -98,7 +98,7 @@ def azure_connection():
         account = get_current_account()
         print(f"✅ Connecté à Azure: {account['name']}")
         print(f"   Subscription ID: {account['id']}")
-        print(f"   Tenant ID: {account['tenantId']}")
+        print(f"   Tenant ID: {account['tenant_id']}")
     except AzureWrapperError as e:
         pytest.fail(
             f"❌ Erreur: Pas connecté à Azure CLI.\n"
