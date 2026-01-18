@@ -38,6 +38,73 @@ TRANSLATOR_SKU_F0 = "F0"  # ❌ NE PAS MODIFIER - SKU F0 OBLIGATOIRE ❌
 # ============================================================================
 
 
+def _purge_soft_deleted_translators() -> int:
+    """
+    Purge tous les services Translator soft-deleted pour libérer le quota F0.
+    
+    Azure ne permet qu'un seul service Translator F0 par subscription.
+    Les services supprimés restent en soft-deleted et comptent contre le quota.
+    Cette fonction les purge définitivement.
+    
+    Returns:
+        Nombre de services purgés
+        
+    Raises:
+        AzureWrapperError: Si le listage ou le purge échoue
+    """
+    try:
+        # Lister les services soft-deleted
+        list_cmd = ["az", "cognitiveservices", "account", "list-deleted", "--output", "json"]
+        result = run_az_command(list_cmd)
+        
+        import json
+        soft_deleted = json.loads(result["stdout"])
+        
+        # Filtrer uniquement les TextTranslation
+        translator_deleted = [
+            svc for svc in soft_deleted 
+            if svc.get("kind") == "TextTranslation"
+        ]
+        
+        if not translator_deleted:
+            return 0
+        
+        print(f"⚠️  Détecté {len(translator_deleted)} service(s) Translator soft-deleted bloquant le quota F0")
+        print("🧹 Purge automatique en cours...")
+        
+        purged_count = 0
+        for svc in translator_deleted:
+            name = svc.get("name")
+            location = svc.get("location")
+            resource_group = svc.get("resourceGroup", "")
+            
+            if not name or not location:
+                continue
+            
+            try:
+                purge_cmd = [
+                    "az", "cognitiveservices", "account", "purge",
+                    "--name", name,
+                    "--resource-group", resource_group,
+                    "--location", location
+                ]
+                run_az_command(purge_cmd, timeout=30)
+                print(f"   ✅ Purgé: {name} ({location})")
+                purged_count += 1
+            except Exception as e:
+                print(f"   ⚠️  Échec du purge de {name}: {e}")
+                continue
+        
+        print(f"✅ {purged_count} service(s) purgé(s) - Quota F0 libéré")
+        print()
+        return purged_count
+        
+    except Exception as e:
+        # Ne pas bloquer la création si le purge échoue
+        print(f"⚠️  Avertissement: Impossible de purger les services soft-deleted: {e}")
+        return 0
+
+
 def create_translator(
     name: str,
     resource_group: str,
@@ -117,39 +184,66 @@ def create_translator(
         tags_str = " ".join([f"{k}={v}" for k, v in tags.items()])
         command.extend(["--tags", tags_str])
 
-    # Exécution de la commande
-    try:
-        print("⏳ Création du service Translator en cours... (environ 1 minute)")
-        result = run_az_command(command, timeout=180)  # 3 minutes max
+    # Exécution de la commande (avec retry automatique si quota F0 bloqué)
+    retry_attempted = False
+    while True:
+        try:
+            print("⏳ Création du service Translator en cours... (environ 1 minute)")
+            result = run_az_command(command, timeout=180)  # 3 minutes max
 
-        print("✅ Service Translator créé avec succès !")
-        print()
+            print("✅ Service Translator créé avec succès !")
+            print()
+            break  # Succès, sortir de la boucle
 
-    except AzureWrapperError as e:
-        # Gestion d'erreurs spécifiques
-        error_msg = str(e)
+        except AzureWrapperError as e:
+            # Gestion d'erreurs spécifiques
+            error_msg = str(e)
 
-        if "ResourceExists" in error_msg or "AlreadyExists" in error_msg:
-            raise AzureWrapperError(
-                f"Le service Translator '{name}' existe déjà dans le Resource Group '{resource_group}'. "
-                "Utilisez un nom différent ou supprimez le service existant."
-            ) from e
+            if "ResourceExists" in error_msg or "AlreadyExists" in error_msg:
+                raise AzureWrapperError(
+                    f"Le service Translator '{name}' existe déjà dans le Resource Group '{resource_group}'. "
+                    "Utilisez un nom différent ou supprimez le service existant."
+                ) from e
 
-        elif "QuotaExceeded" in error_msg or "quota" in error_msg.lower():
-            raise AzureWrapperError(
-                f"Quota Azure dépassé pour les services Cognitive Services. "
-                "Vérifiez les limites de votre subscription ou contactez le support Azure."
-            ) from e
+            elif "CanNotCreateMultipleFreeAccounts" in error_msg:
+                # Quota F0 bloqué par services soft-deleted
+                if retry_attempted:
+                    # Déjà essayé une fois, ne pas boucler
+                    raise AzureWrapperError(
+                        "Impossible de créer le service Translator F0 malgré le purge des services soft-deleted. "
+                        "Vérifiez qu'il n'existe pas déjà un service Translator F0 actif dans votre subscription."
+                    ) from e
 
-        elif "InvalidResourceGroup" in error_msg:
-            raise AzureWrapperError(
-                f"Le Resource Group '{resource_group}' n'existe pas. "
-                "Créez-le d'abord avec: az group create --name {resource_group} --location {region}"
-            ) from e
+                # Première tentative de résolution automatique
+                print()
+                print("⚠️  ERREUR: Quota F0 atteint (1 seul service Translator F0 autorisé par subscription)")
+                purged = _purge_soft_deleted_translators()
 
-        else:
-            # Erreur générique
-            raise
+                if purged > 0:
+                    print("🔄 Nouvelle tentative de création après purge...")
+                    retry_attempted = True
+                    continue  # Réessayer la boucle
+                else:
+                    raise AzureWrapperError(
+                        "Quota F0 atteint et aucun service soft-deleted à purger. "
+                        "Vérifiez qu'il n'existe pas déjà un service Translator F0 actif."
+                    ) from e
+
+            elif "QuotaExceeded" in error_msg or "quota" in error_msg.lower():
+                raise AzureWrapperError(
+                    f"Quota Azure dépassé pour les services Cognitive Services. "
+                    "Vérifiez les limites de votre subscription ou contactez le support Azure."
+                ) from e
+
+            elif "InvalidResourceGroup" in error_msg:
+                raise AzureWrapperError(
+                    f"Le Resource Group '{resource_group}' n'existe pas. "
+                    "Créez-le d'abord avec: az group create --name {resource_group} --location {region}"
+                ) from e
+
+            else:
+                # Erreur générique
+                raise
 
     # Récupération de l'endpoint
     print("📋 Récupération de l'endpoint...")

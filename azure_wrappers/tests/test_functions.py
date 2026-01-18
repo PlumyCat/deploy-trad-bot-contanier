@@ -48,7 +48,7 @@ class TestCreateFunctionApp:
             "defaultHostName": "func-test-app.azurewebsites.net",
             "state": "Running",
         }
-        mock_run.return_value = json.dumps(mock_response)
+        mock_run.return_value = {"stdout": json.dumps(mock_response)}
 
         result = create_function_app(
             name="func-test-app",
@@ -85,7 +85,7 @@ class TestCreateFunctionApp:
             "name": "func-test",
             "defaultHostName": "func-test.azurewebsites.net",
         }
-        mock_run.return_value = json.dumps(mock_response)
+        mock_run.return_value = {"stdout": json.dumps(mock_response)}
 
         result = create_function_app(
             name="func-test",
@@ -214,7 +214,7 @@ class TestDeployFunctions:
             "status": "success",
             "id": "deployment-123",
         }
-        mock_run.return_value = json.dumps(mock_response)
+        mock_run.return_value = {"stdout": json.dumps(mock_response)}
 
         result = deploy_functions(
             name="func-test",
@@ -331,7 +331,7 @@ class TestVerifyFunctionApp:
             "defaultHostName": "func-test.azurewebsites.net",
             "kind": "functionapp,linux",
         }
-        mock_run.return_value = json.dumps(mock_response)
+        mock_run.return_value = {"stdout": json.dumps(mock_response)}
         mock_list.return_value = ["health", "start_translation"]
 
         result = verify_function_app(
@@ -443,7 +443,7 @@ class TestHelperFunctions:
             {"name": "start_translation"},
             {"name": "check_status"},
         ]
-        mock_run.return_value = json.dumps(mock_response)
+        mock_run.return_value = {"stdout": json.dumps(mock_response)}
 
         result = _list_deployed_functions("func-test", "rg-test")
 

@@ -122,7 +122,7 @@ class TestListAccounts:
                 "tenantId": "tenant-123",
             },
         ]
-        mock_run.return_value = json.dumps(mock_response)
+        mock_run.return_value = {"stdout": json.dumps(mock_response)}
 
         result = list_accounts()
 
@@ -162,7 +162,7 @@ class TestGetCurrentAccount:
             "state": "Enabled",
             "user": {"name": "user@example.com", "type": "user"},
         }
-        mock_run.return_value = json.dumps(mock_response)
+        mock_run.return_value = {"stdout": json.dumps(mock_response)}
 
         result = get_current_account()
 
@@ -272,7 +272,7 @@ class TestCheckPermissions:
         mock_response = [
             {"roleDefinitionName": "Contributor"},
         ]
-        mock_run.return_value = json.dumps(mock_response)
+        mock_run.return_value = {"stdout": json.dumps(mock_response)}
 
         result = check_permissions()
 
@@ -288,7 +288,7 @@ class TestCheckPermissions:
         mock_response = [
             {"roleDefinitionName": "Reader"},
         ]
-        mock_run.return_value = json.dumps(mock_response)
+        mock_run.return_value = {"stdout": json.dumps(mock_response)}
 
         result = check_permissions()
 
@@ -304,7 +304,7 @@ class TestCheckPermissions:
         mock_response = [
             {"roleDefinitionName": "Owner"},
         ]
-        mock_run.return_value = json.dumps(mock_response)
+        mock_run.return_value = {"stdout": json.dumps(mock_response)}
 
         result = check_permissions()
 
