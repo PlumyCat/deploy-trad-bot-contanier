@@ -10,10 +10,11 @@ Modules disponibles:
 - storage: Déploiement Azure Storage Account ✅
 - functions: Déploiement Azure Functions App ✅
 - account: Gestion multi-comptes et permissions Azure ✅
+- report_generator: Génération rapports d'intervention ✅
 - common: Fonctions communes et gestion d'erreurs
 """
 
-__version__ = "1.3.0"
+__version__ = "1.4.0"
 __author__ = "Aux Petits Oignons Team"
 
 from .translator import create_translator, verify_translator
@@ -41,6 +42,13 @@ from .account import (
     check_permissions,
     reconnect_azure,
     ensure_logged_in_with_permissions,
+)
+from .report_generator import (
+    generate_report,
+    save_report,
+    display_report,
+    regenerate_report,
+    list_reports,
 )
 from .common import AzureWrapperError, sanitize_credential
 
@@ -70,6 +78,12 @@ __all__ = [
     "check_permissions",
     "reconnect_azure",
     "ensure_logged_in_with_permissions",
+    # Report Generator
+    "generate_report",
+    "save_report",
+    "display_report",
+    "regenerate_report",
+    "list_reports",
     # Common
     "AzureWrapperError",
     "sanitize_credential",
