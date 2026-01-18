@@ -199,6 +199,134 @@ Quand une commande Azure CLI échoue :
 
 ---
 
+### Gestion de l'Authentification Multi-Facteurs (MFA)
+
+**Problème courant :** Le technicien ne peut pas se connecter avec `az login` à cause du MFA
+
+#### Quand MFA Bloque Azure CLI
+
+Le MFA peut empêcher la connexion Azure CLI dans le conteneur Docker pour plusieurs raisons :
+- Le navigateur ne s'ouvre pas correctement
+- Le device code flow est bloqué par une politique de sécurité
+- L'IP du technicien n'est pas reconnue comme fiable
+- Une politique d'accès conditionnel stricte s'applique
+
+#### Symptômes Typiques
+
+```bash
+$ az login
+# Erreur: "MFA is required but cannot be completed"
+# OU
+# Erreur: "Conditional Access policy blocked"
+# OU
+# Le navigateur s'ouvre mais rien ne se passe
+```
+
+#### Votre Rôle en Cas de Problème MFA
+
+1. **Identifier le problème**
+   - Demandez au technicien de tester : `az login --use-device-code`
+   - Si ça bloque aussi, c'est probablement un problème MFA/Conditional Access
+
+2. **Référer au guide MFA complet**
+   ```
+   📖 Un guide complet MFA est disponible dans le projet :
+
+   docs/guide-mfa.md
+
+   Ce guide contient 3 solutions détaillées :
+   1. Emplacements Nommés (Recommandé) - Pour déploiements réguliers
+   2. Exclusion Temporaire MFA - Pour déploiements ponctuels
+   3. Service Principal - Pour automatisation
+
+   Vous pouvez afficher ce guide sur demande du technicien.
+   ```
+
+3. **Expliquer les solutions au technicien**
+
+   **Solution rapide (si le technicien a accès admin Entra ID) :**
+   ```
+   Le plus simple est de créer un "Emplacement Nommé" dans Azure qui marque votre IP actuelle comme fiable.
+
+   Étapes rapides :
+   1. Trouvez votre IP publique : https://whatismyipaddress.com
+   2. Azure Portal > Microsoft Entra ID > Sécurité > Accès conditionnel > Emplacements nommés
+   3. Créez un nouvel emplacement avec votre IP
+   4. Marquez-le comme "emplacement approuvé"
+   5. Créez une politique d'accès conditionnel qui exempte cet emplacement du MFA
+
+   Le guide docs/guide-mfa.md contient les détails complets avec screenshots.
+   ```
+
+   **Solution temporaire (si urgent et accès admin) :**
+   ```
+   ⚠️ Pour un déploiement ponctuel urgent, vous pouvez créer une exclusion MFA TEMPORAIRE :
+
+   1. Azure Portal > Entra ID > Sécurité > Accès conditionnel > Politiques
+   2. Créez une politique nommée "TEMPORAIRE - Exclusion MFA - [Votre Nom] - [Date]"
+   3. Appliquez-la uniquement à votre compte et à Azure Management
+   4. ⚠️ IMPORTANT : Supprimez cette politique IMMÉDIATEMENT après le déploiement
+
+   Consultez docs/guide-mfa.md section "Exclusion Temporaire" pour les détails.
+   ```
+
+   **Solution avancée (si pas d'accès admin ou automatisation) :**
+   ```
+   Si vous n'avez pas accès administrateur Entra ID, vous pouvez demander à votre admin de créer un Service Principal.
+
+   Un Service Principal est un compte de service qui se connecte sans MFA.
+   Le guide docs/guide-mfa.md section "Service Principal" explique comment le configurer.
+   ```
+
+4. **Rassurer le technicien**
+   ```
+   Ce problème MFA est très courant lors des déploiements Azure depuis des conteneurs Docker.
+   C'est une mesure de sécurité d'Azure, pas un problème avec notre installation.
+
+   Avec une des 3 solutions du guide MFA, vous pourrez vous connecter sans problème.
+   ```
+
+#### Commandes Utiles pour Diagnostiquer
+
+```bash
+# Vérifier l'IP publique du technicien
+curl ifconfig.me
+# OU
+curl https://api.ipify.org
+
+# Tester connexion avec device code
+az login --use-device-code
+
+# Vérifier les comptes connectés
+az account list --output table
+
+# Déconnexion complète
+az logout
+```
+
+#### Afficher le Guide MFA sur Demande
+
+Si le technicien demande "Comment gérer le MFA ?" ou "J'ai un problème MFA" :
+
+```
+📖 Je vais vous afficher le guide complet MFA.
+
+Le guide se trouve dans : docs/guide-mfa.md
+
+[Puis utilisez le Read tool pour lire et afficher le contenu du guide]
+
+Ce guide contient :
+✅ Explications du problème MFA
+✅ 3 solutions détaillées étape par étape
+✅ Troubleshooting des erreurs courantes
+✅ Liens vers documentation Microsoft officielle
+✅ Rappels de sécurité importants
+
+Quelle solution préférez-vous utiliser ?
+```
+
+---
+
 ### Sanitisation des Logs
 
 **AUCUN CREDENTIAL NE DOIT APPARAÎTRE DANS LES LOGS OU SORTIES**
