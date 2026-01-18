@@ -18,3 +18,9 @@ services:
     working_dir: /app/src
     entrypoint: /usr/local/bin/entrypoint.sh
     command: bash -c "python /app/doc_server.py & exec bash"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/procedure"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s

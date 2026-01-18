@@ -1,3 +1,21 @@
+# ============================================
+# Aux Petits Oignons - Container Docker
+# ============================================
+# Container Ubuntu 24.04 pre-configure avec:
+# - OpenCode (AI agent pour deploiement Azure)
+# - Azure CLI (derniere version)
+# - Azure Functions Core Tools v4
+# - Flask (serveur documentation)
+# - Python 3.11+ avec venv
+#
+# Objectifs:
+# - Build < 5 minutes
+# - Demarrage < 2 minutes
+# - Taille < 2GB
+#
+# Story: STORY-003 (8 points)
+# ============================================
+
 FROM ubuntu:24.04
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -109,7 +127,9 @@ echo ""\n\
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-# Expose port for documentation server
+# Expose port for documentation server (Flask)
+# Note: Mapped to 5545 externally via docker-compose.yml
+# Access documentation at http://localhost:5545/procedure
 EXPOSE 8080
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
