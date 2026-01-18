@@ -14,7 +14,7 @@ sprints:
     end_date: "2026-01-31"
     capacity_points: 30
     committed_points: 27
-    completed_points: 2
+    completed_points: 7
     status: "in_progress"
     goal: "Établir l'infrastructure de base et l'environnement d'installation complet avec OpenCode configuré"
     stories:
@@ -29,10 +29,11 @@ sprints:
       - story_id: "STORY-001"
         title: "Créer Installeur Windows .exe avec Inno Setup"
         points: 5
-        status: "not_started"
+        status: "completed"
         assigned_to: "Eric"
         epic: "EPIC-001"
         priority: "Must Have"
+        completed_date: "2026-01-18"
       - story_id: "STORY-002"
         title: "Script PowerShell Exclusions Defender ASR"
         points: 3
