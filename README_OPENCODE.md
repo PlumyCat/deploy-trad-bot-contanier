@@ -266,7 +266,7 @@ OpenCode : Excellent ! Nous avons tout ce qu'il faut.
 
 Commençons par la connexion à Azure CLI.
 
-Je vais exécuter : az login
+Je vais exécuter : az login --tenant <tenant-id>
 
 [OpenCode exécute la commande et guide le technicien à travers
 chaque étape du déploiement Phase 1]

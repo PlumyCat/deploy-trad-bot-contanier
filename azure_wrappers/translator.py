@@ -86,7 +86,7 @@ def create_translator(
     # Vérification de connexion Azure CLI
     if not check_az_logged_in():
         raise AzureWrapperError(
-            "Vous devez être connecté à Azure CLI. Exécutez: az login"
+            "Vous devez être connecté à Azure CLI. Exécutez: az login --tenant <tenant-id>"
         )
 
     # Validation des paramètres

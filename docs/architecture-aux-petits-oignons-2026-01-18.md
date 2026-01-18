@@ -219,7 +219,7 @@ User → Lance start.bat
 ```
 User → OpenCode: "Nouveau déploiement Bot Traducteur"
   → OpenCode: Demande connexion Azure
-  → User: Se connecte (az login)
+  → User: Se connecte (az login --tenant <tenant-id>)
   → OpenCode: Vérifie permissions
   → OpenCode: Crée Storage Account
     → Azure CLI wrapper → Azure API
@@ -688,9 +688,9 @@ Services à déployer:
 **Conversation Flow Example:**
 ```
 OpenCode: Bonjour! Je vais vous guider pour déployer le Bot Traducteur chez votre client.
-          Commençons par vous connecter à Azure. Tapez: az login
+          Commençons par vous connecter à Azure. Tapez: az login --tenant <tenant-id>
 
-User: az login
+User: az login --tenant <tenant-id>
 [Browser opens for authentication]
 
 OpenCode: Parfait! Vous êtes connecté. Maintenant, créons le groupe de ressources.
@@ -828,7 +828,7 @@ if __name__ == "__main__":
 
 **Dependencies:**
 - Azure CLI installé dans container
-- User authentifié (az login)
+- User authentifié (az login --tenant <tenant-id>)
 
 **FRs Addressed:** FR-006, FR-007, FR-008, FR-009, FR-014
 
@@ -910,7 +910,7 @@ class AzureDeployer:
             "AuthorizationFailed": "Problème: Permissions insuffisantes.\nSolution: Vérifiez que votre compte a les droits 'Contributor' sur la subscription.",
             "ResourceGroupNotFound": "Problème: Groupe de ressources introuvable.\nSolution: Créez d'abord le groupe de ressources.",
             "SubscriptionNotFound": "Problème: Subscription Azure introuvable.\nSolution: Vérifiez que vous êtes connecté au bon tenant Azure.",
-            "InvalidAuthenticationToken": "Problème: Token d'authentification invalide ou expiré.\nSolution: Reconnectez-vous avec 'az login'.",
+            "InvalidAuthenticationToken": "Problème: Token d'authentification invalide ou expiré.\nSolution: Reconnectez-vous avec 'az login --tenant <tenant-id>'.",
             "LocationNotAvailableForResourceType": "Problème: La région choisie ne supporte pas ce service.\nSolution: Essayez une autre région (ex: francecentral, westeurope).",
         }
 
@@ -1217,7 +1217,7 @@ Le système "Aux Petits Oignons" ne gère **aucune donnée persistante** en base
 
 ```
 [Technicien]
-    ↓ az login
+    ↓ az login --tenant <tenant-id>
 [Azure CLI in Container]
     ↓ Token temporaire (mémoire)
 [Azure API]
@@ -1583,7 +1583,7 @@ Voir Component 6 (`_interpret_error()`)
 ### Authentication
 
 **Azure CLI Authentication:**
-- **Method:** `az login` (OAuth 2.0 device flow ou browser)
+- **Method:** `az login --tenant <tenant-id>` (OAuth 2.0 device flow ou browser)
 - **Token lifetime:** Géré par Azure CLI (typiquement 1h, refresh automatique)
 - **Multi-factor authentication:** Supporté (voir Open Question Q3 - gestion MFA)
 
@@ -2043,7 +2043,7 @@ jobs:
 | FR-006 | Déploiement Azure Storage | Component 6 (Azure Deployer) | azure_deployer.create_storage_account() |
 | FR-007 | Déploiement Translator F0 | Component 6 (Azure Deployer) | SKU F0 imposé dans create_translator() |
 | FR-008 | Déploiement Functions | Component 6 (Azure Deployer) | deploy_function_app(), runtime Python 3.11 |
-| FR-009 | Support multi-comptes | Component 6 + Azure CLI | az login avec device flow, gère multi-comptes |
+| FR-009 | Support multi-comptes | Component 6 + Azure CLI | az login --tenant <tenant-id> avec device flow, gère multi-comptes |
 | FR-010 | Gestion cas MFA | Component 4 (OpenCode) + Doc | OpenCode guide création emplacements nommés |
 | FR-011 | Serveur documentation Flask | Component 5 (Flask) | flask_server.py, serve Markdown → HTML |
 | FR-012 | Clone repo trad-bot-src | Component 3 (start.sh) | git clone dans container au démarrage |
@@ -2252,13 +2252,13 @@ Avec cette architecture complète, l'équipe de développement a tout le nécess
 
 ### Issue 4: MFA bloque az login
 
-**Symptom:** `az login` échoue avec erreur MFA
+**Symptom:** `az login --tenant <tenant-id>` échoue avec erreur MFA
 
 **Solution:**
 1. OpenCode guide création emplacement nommé
 2. Ajouter IP technicien dans emplacement nommé
 3. Créer règle exclusion MFA pour cet emplacement
-4. Réessayer `az login`
+4. Réessayer `az login --tenant <tenant-id>`
 5. **Important:** Supprimer règle MFA après déploiement
 
 ---

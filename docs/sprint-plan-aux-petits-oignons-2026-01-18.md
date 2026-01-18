@@ -319,7 +319,7 @@ Je veux pouvoir me connecter avec un compte délégué OU un compte admin créé
 Afin de déployer chez différents clients
 
 **Acceptance Criteria:**
-- [ ] OpenCode guide le technicien pour `az login`
+- [ ] OpenCode guide le technicien pour `az login --tenant <tenant-id>`
 - [ ] Processus de connexion device flow supporté
 - [ ] OpenCode liste les comptes connectés (`az account list`)
 - [ ] OpenCode permet de sélectionner le bon compte si plusieurs

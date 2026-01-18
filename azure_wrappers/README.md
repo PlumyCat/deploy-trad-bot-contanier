@@ -54,7 +54,7 @@ TRANSLATOR_SKU_F0 = "F0"
    az --version
 
    # Se connecter à Azure
-   az login
+   az login --tenant <tenant-id>
    ```
 
 ### Installation du package
