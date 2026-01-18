@@ -270,7 +270,7 @@ class TestE2EWorkflow:
         print(f"Création Storage Account dans {test_resource_group}...")
         storage_result = create_storage_account(
             resource_group=test_resource_group,
-            location=TEST_REGION,
+            region=TEST_REGION,
             subscription_id=subscription_id,
             prefix=TEST_PREFIX,
         )
@@ -332,7 +332,7 @@ class TestE2EWorkflow:
         print(f"Création Translator avec SKU F0 dans {test_resource_group}...")
         translator_result = create_translator(
             resource_group=test_resource_group,
-            location=TEST_REGION,
+            region=TEST_REGION,
             subscription_id=subscription_id,
             prefix=TEST_PREFIX,
         )
@@ -427,7 +427,7 @@ class TestE2EWorkflow:
         print(f"Création Function App dans {test_resource_group}...")
         function_result = create_function_app(
             resource_group=test_resource_group,
-            location=TEST_REGION,
+            region=TEST_REGION,
             storage_account_name=self.storage_name,
             subscription_id=subscription_id,
             prefix=TEST_PREFIX,
