@@ -137,8 +137,8 @@ sprints:
     end_date: "2026-02-28"
     capacity_points: 30
     committed_points: 17
-    completed_points: 9
-    status: "in_progress"
+    completed_points: 17
+    status: "completed"
     goal: "Finaliser la documentation, le reporting, et valider le système complet end-to-end"
     stories:
       - story_id: "STORY-010"
@@ -176,16 +176,17 @@ sprints:
       - story_id: "STORY-INF-001"
         title: "Tests End-to-End du Workflow Complet"
         points: 8
-        status: "not_started"
+        status: "completed"
         assigned_to: "Eric"
         epic: "Infrastructure"
         priority: "Should Have"
+        completed_date: "2026-01-18"
 
 velocity:
   sprint_1: 27  # Sprint 1 completed: 27/27 points
   sprint_2: 26  # Sprint 2 completed: 26/26 points
-  sprint_3: null
-  rolling_average: 26.5
+  sprint_3: 17  # Sprint 3 completed: 17/17 points
+  rolling_average: 23.3
 
 team:
   size: 1

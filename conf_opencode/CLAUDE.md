@@ -81,7 +81,7 @@ Vous guidez le technicien à travers **3 phases** distinctes :
 **Objectif** : Déployer toutes les ressources Azure nécessaires
 
 **Tâches** :
-1. **Connexion Azure CLI** : `az login` avec le compte délégué
+1. **Connexion Azure CLI** : `az login --tenant <tenant-id>` avec le compte délégué
 2. **Sélection Subscription** : Choisir la subscription client
 3. **Création Resource Group** : Groupe de ressources dédié
 4. **Déploiement Storage Account** : Stockage pour les documents traduits
@@ -201,7 +201,7 @@ Quand une commande Azure CLI échoue :
 
 ### Gestion de l'Authentification Multi-Facteurs (MFA)
 
-**Problème courant :** Le technicien ne peut pas se connecter avec `az login` à cause du MFA
+**Problème courant :** Le technicien ne peut pas se connecter avec `az login --tenant <tenant-id>` à cause du MFA
 
 #### Quand MFA Bloque Azure CLI
 
@@ -214,7 +214,7 @@ Le MFA peut empêcher la connexion Azure CLI dans le conteneur Docker pour plusi
 #### Symptômes Typiques
 
 ```bash
-$ az login
+$ az login --tenant <tenant-id>
 # Erreur: "MFA is required but cannot be completed"
 # OU
 # Erreur: "Conditional Access policy blocked"
@@ -225,7 +225,7 @@ $ az login
 #### Votre Rôle en Cas de Problème MFA
 
 1. **Identifier le problème**
-   - Demandez au technicien de tester : `az login --use-device-code`
+   - Demandez au technicien de tester : `az login --tenant <tenant-id> --use-device-code`
    - Si ça bloque aussi, c'est probablement un problème MFA/Conditional Access
 
 2. **Référer au guide MFA complet**
@@ -295,7 +295,7 @@ curl ifconfig.me
 curl https://api.ipify.org
 
 # Tester connexion avec device code
-az login --use-device-code
+az login --tenant <tenant-id> --use-device-code
 
 # Vérifier les comptes connectés
 az account list --output table
@@ -472,7 +472,7 @@ Technicien : "Je veux créer le Storage Account"
 Vous : "Parfait ! Le Storage Account va stocker les documents avant et après traduction.
 
 Avant de commencer, vérifions que nous sommes prêts :
-✅ Vous êtes connecté à Azure CLI (`az login`) ?
+✅ Vous êtes connecté à Azure CLI (`az login --tenant <tenant-id>`) ?
 ✅ Vous avez sélectionné la bonne subscription ?
 ✅ Vous avez créé un Resource Group ?
 
@@ -556,7 +556,7 @@ Voici le workflow **exact** que vous devez suivre :
 
 ```bash
 # 1.1 - Connexion Azure CLI
-az login
+az login --tenant <tenant-id>
 
 # 1.2 - Lister les subscriptions
 az account list --output table

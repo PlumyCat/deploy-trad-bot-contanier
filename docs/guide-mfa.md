@@ -30,12 +30,12 @@ L'**Authentification Multi-Facteurs (MFA)** est une sécurité qui demande une d
 
 ### Pourquoi MFA bloque Azure CLI ?
 
-Quand vous exécutez `az login` dans le conteneur Docker, Azure CLI ouvre un navigateur pour la connexion. **Problème :** dans certains environnements (RDP, VDI, conteneurs), le navigateur peut :
+Quand vous exécutez `az login --tenant <tenant-id>` dans le conteneur Docker, Azure CLI ouvre un navigateur pour la connexion. **Problème :** dans certains environnements (RDP, VDI, conteneurs), le navigateur peut :
 - Ne pas s'ouvrir correctement
 - Ne pas communiquer avec Azure CLI
 - Être bloqué par des politiques réseau
 
-Même avec `az login --use-device-code`, le MFA peut bloquer si :
+Même avec `az login --tenant <tenant-id> --use-device-code`, le MFA peut bloquer si :
 - Votre IP n'est pas reconnue
 - Votre emplacement géographique est différent
 - Une politique d'accès conditionnel est trop stricte
@@ -43,7 +43,7 @@ Même avec `az login --use-device-code`, le MFA peut bloquer si :
 ### Symptômes Courants
 
 ```bash
-$ az login
+$ az login --tenant <tenant-id>
 # Résultat: Le navigateur s'ouvre mais rien ne se passe
 # OU
 # Résultat: "MFA is required but cannot be completed"
@@ -154,9 +154,9 @@ Une fois l'emplacement nommé créé, vous devez créer une **politique d'accès
 
 2. **Testez Azure CLI**
    ```bash
-   az login
+   az login --tenant <tenant-id>
    # Si device code nécessaire :
-   az login --use-device-code
+   az login --tenant <tenant-id> --use-device-code
    ```
 
 3. **Vérifiez la connexion**
@@ -228,7 +228,7 @@ Cette solution **désactive temporairement le MFA** pour votre compte. Utilisez-
 az logout
 
 # Reconnectez-vous (sans MFA)
-az login --use-device-code
+az login --tenant <tenant-id> --use-device-code
 
 # Vérifiez la connexion
 az account show
@@ -254,7 +254,7 @@ opencode
 4. **Vérifiez que MFA est réactivé**
    ```bash
    az logout
-   az login
+   az login --tenant <tenant-id>
    # Devrait maintenant demander MFA
    ```
 
@@ -410,7 +410,7 @@ The browser failed to open or communicate back.
 **Solutions :**
 1. Utilisez le device code flow :
    ```bash
-   az login --use-device-code
+   az login --tenant <tenant-id> --use-device-code
    ```
 2. Copiez le code affiché
 3. Ouvrez [https://microsoft.com/devicelogin](https://microsoft.com/devicelogin) sur votre machine Windows
@@ -463,7 +463,7 @@ Si vous utilisez la **Solution 2 (Exclusion Temporaire)** :
 Après chaque déploiement, vérifiez :
 
 - [ ] Politique d'exclusion MFA temporaire supprimée (si utilisée)
-- [ ] MFA réactivé sur votre compte (testez avec `az logout && az login`)
+- [ ] MFA réactivé sur votre compte (testez avec `az logout && az login --tenant <tenant-id>`)
 - [ ] Pas de credentials Azure CLI stockés en clair dans le conteneur
 - [ ] Service Principal (si utilisé) a les permissions minimales nécessaires
 - [ ] Logs d'audit Azure consultés pour vérifier connexions
