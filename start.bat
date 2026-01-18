@@ -99,7 +99,8 @@ docker stop trad-bot-opencode >nul 2>&1
 docker rm trad-bot-opencode >nul 2>&1
 
 :: Demarrer le container (avec --force-recreate pour garantir l'execution de l'entrypoint)
-docker-compose up -d --force-recreate
+echo Attente que le container soit pret (health check)..
+docker-compose up -d --force-recreate --wait
 if errorlevel 1 (
     echo(
     echo ========================================
