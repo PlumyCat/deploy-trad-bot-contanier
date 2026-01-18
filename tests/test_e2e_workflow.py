@@ -433,23 +433,56 @@ class TestE2EWorkflow:
         assert self.__class__.function_app_name is not None, "Test 4 doit être exécuté avant Test 5"
 
         subscription_id = azure_connection["id"]
+        tenant_id = azure_connection.get("tenantId")
 
-        # Préparer les données pour le rapport
-        deployment_data = {
-            "client_name": "TEST-E2E-Client",
-            "subscription_id": subscription_id,
-            "resource_group": test_resource_group,
+        # Préparer les données pour le rapport au format attendu par generate_report
+        storage_info = {
+            "name": self.__class__.storage_name,
+            "sku": "Standard_LRS",
+            "container_name": "translations",
+            "primary_endpoints": {
+                "blob": f"https://{self.__class__.storage_name}.blob.core.windows.net/"
+            }
+        }
+
+        translator_info = {
+            "name": self.__class__.translator_name,
+            "sku": "F0",  # IMPORTANT: SKU F0 vérifié dans test 3
             "region": TEST_REGION,
-            "storage_account": self.__class__.storage_name,
-            "translator_name": self.__class__.translator_name,
-            "translator_sku": "F0",  # IMPORTANT: SKU F0 vérifié dans test 3
-            "function_app_name": self.__class__.function_app_name,
-            "function_app_url": self.__class__.function_app_url,
+            "endpoint": self.__class__.translator_endpoint
+        }
+
+        function_app_info = {
+            "name": self.__class__.function_app_name,
+            "default_hostname": self.__class__.function_app_url.replace("https://", ""),
+            "runtime_version": "3.11",
+            "state": "Running"
         }
 
         # Générer le rapport
         print("Génération du rapport...")
-        report = generate_report(deployment_data)
+        result = generate_report(
+            client_name="TEST-E2E-Client",
+            resource_group=test_resource_group,
+            region=TEST_REGION,
+            storage_info=storage_info,
+            translator_info=translator_info,
+            function_app_info=function_app_info,
+            technician_name="Claude Code E2E Test",
+            subscription_id=subscription_id,
+            tenant_id=tenant_id,
+            deployment_duration="Durée E2E Test",
+            notes="Test automatisé E2E - validation complète du workflow de déploiement",
+            template_style="plain"
+        )
+
+        assert result is not None
+        assert isinstance(result, dict)
+        assert "report_content" in result
+        assert "report_path" in result
+
+        report = result["report_content"]
+        report_path = result["report_path"]
 
         assert report is not None
         assert isinstance(report, str)
@@ -466,24 +499,17 @@ class TestE2EWorkflow:
 
         print("✅ Rapport généré avec toutes les informations")
 
-        # Sauvegarder le rapport
-        print("Sauvegarde du rapport...")
-        report_path = save_report(
-            report_content=report,
-            client_name="TEST-E2E-Client",
-            output_dir="tests/outputs"
-        )
-
+        # Vérifier que le rapport a été sauvegardé
         assert report_path is not None
         assert Path(report_path).exists()
 
         print(f"✅ Rapport sauvegardé: {report_path}")
 
-        print(f"✅ Test 5 réussi: Rapport généré et sauvegardé")
-
-        # Stocker pour vérification finale (class variables)
+        # Stocker le rapport dans les variables de classe
         self.__class__.report_path = report_path
         self.__class__.report_content = report
+
+        print(f"✅ Test 5 réussi: Rapport généré et sauvegardé")
 
     @pytest.mark.order(6)
     def test_06_cleanup_verification(self, azure_connection, test_resource_group):
