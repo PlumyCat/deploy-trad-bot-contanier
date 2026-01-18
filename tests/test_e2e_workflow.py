@@ -106,19 +106,24 @@ def azure_connection():
             f"Détails: {e}"
         )
 
-    # Vérifier permissions
+    # Vérifier permissions (optionnel - peut échouer avec comptes délégués)
     print("\nVérification des permissions...")
-    permissions_result = check_permissions(subscription_id=account["id"])
+    try:
+        permissions_result = check_permissions(subscription_id=account["id"])
 
-    if not permissions_result["has_permissions"]:
-        pytest.fail(
-            f"❌ Permissions insuffisantes.\n"
-            f"{permissions_result['message']}\n"
-            f"Rôles trouvés: {', '.join(permissions_result['roles'])}\n"
-            f"Rôles requis: {', '.join(permissions_result['required_roles'])}"
-        )
+        if not permissions_result["has_permissions"]:
+            pytest.fail(
+                f"❌ Permissions insuffisantes.\n"
+                f"{permissions_result['message']}\n"
+                f"Rôles trouvés: {', '.join(permissions_result['roles'])}\n"
+                f"Rôles requis: {', '.join(permissions_result['required_roles'])}"
+            )
 
-    print(f"✅ Permissions OK - Rôles: {', '.join(permissions_result['roles'])}")
+        print(f"✅ Permissions OK - Rôles: {', '.join(permissions_result['roles'])}")
+    except AzureWrapperError as e:
+        # Comptes délégués peuvent ne pas avoir accès au Graph pour check_permissions
+        print(f"⚠️  Vérification des permissions ignorée (compte délégué): {str(e)[:100]}...")
+        print("   Les tests vont continuer - les erreurs de permissions apparaîtront lors des déploiements.")
 
     yield account
 
