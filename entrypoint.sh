@@ -1,57 +1,97 @@
 #!/bin/bash
 set -e
 
+# Load repo configuration from file if it exists
+if [ -f "/app/repo-config.txt" ]; then
+    echo "Loading repository configuration from repo-config.txt..."
+    source /app/repo-config.txt
+fi
+
 # Clone or update source code from GitHub
 REPO_URL="${REPO_URL:-https://github.com/PlumyCat/trad-bot-src.git}"
 REPO_BRANCH="${REPO_BRANCH:-main}"
+
+echo "Repository: $REPO_URL (branch: $REPO_BRANCH)"
 
 if [ ! -d "/app/src/.git" ]; then
     echo "Cloning source code from $REPO_URL..."
 
     # Clone to a temporary directory first
-    git clone --branch "$REPO_BRANCH" --single-branch "$REPO_URL" /tmp/src_temp
+    if git clone --branch "$REPO_BRANCH" --single-branch "$REPO_URL" /tmp/src_temp 2>/tmp/clone_error.log; then
+        echo "Clone successful, setting up directory structure..."
 
-    # Create /app/src and move .git
-    mkdir -p /app/src
-    mv /tmp/src_temp/.git /app/src/
+        # Create /app/src and move .git
+        mkdir -p /app/src
+        mv /tmp/src_temp/.git /app/src/
 
-    # Copy files that are NOT mounted as volumes (everything except clients/ and Solution/)
-    rsync -av --exclude='clients/' --exclude='Solution/' /tmp/src_temp/ /app/src/
+        # Copy files that are NOT mounted as volumes (everything except clients/ and Solution/)
+        rsync -av --exclude='clients/' --exclude='Solution/' /tmp/src_temp/ /app/src/
 
-    # Copy clients/ and Solution/ content to the mounted volumes (from temp to /app/src/)
-    if [ -d "/tmp/src_temp/clients" ]; then
-        cp -rn /tmp/src_temp/clients/* /app/src/clients/ 2>/dev/null || true
+        # Copy clients/ and Solution/ content to the mounted volumes (from temp to /app/src/)
+        if [ -d "/tmp/src_temp/clients" ]; then
+            cp -rn /tmp/src_temp/clients/* /app/src/clients/ 2>/dev/null || true
+        fi
+        if [ -d "/tmp/src_temp/Solution" ]; then
+            cp -rn /tmp/src_temp/Solution/* /app/src/Solution/ 2>/dev/null || true
+        fi
+
+        rm -rf /tmp/src_temp
+        echo "✓ Source code cloned successfully"
+    else
+        echo "✗ ERROR: Failed to clone repository"
+        echo "Repository URL: $REPO_URL"
+        echo "Branch: $REPO_BRANCH"
+        if [ -f /tmp/clone_error.log ]; then
+            echo "Error details:"
+            cat /tmp/clone_error.log
+        fi
+        echo ""
+        echo "Possible causes:"
+        echo "  - Network connectivity issue"
+        echo "  - Invalid repository URL"
+        echo "  - Branch does not exist"
+        echo "  - Private repository requires authentication"
+        echo ""
+        echo "Container will continue without source code."
+        echo "You can manually clone later or fix repo-config.txt and restart."
+        mkdir -p /app/src
+        rm -rf /tmp/src_temp /tmp/clone_error.log
     fi
-    if [ -d "/tmp/src_temp/Solution" ]; then
-        cp -rn /tmp/src_temp/Solution/* /app/src/Solution/ 2>/dev/null || true
-    fi
-
-    rm -rf /tmp/src_temp
-    echo "Source code cloned successfully"
 else
-    echo "Updating source code..."
+    echo "Repository already exists, checking for updates..."
     cd /app/src
-    git fetch origin "$REPO_BRANCH" 2>/dev/null || true
-    LOCAL_HASH=$(git rev-parse HEAD 2>/dev/null || echo "")
-    REMOTE_HASH=$(git rev-parse origin/"$REPO_BRANCH" 2>/dev/null || echo "")
 
-    if [ "$LOCAL_HASH" != "$REMOTE_HASH" ] && [ -n "$REMOTE_HASH" ]; then
-        echo "New version available, updating..."
-        git pull origin "$REPO_BRANCH" || echo "Update failed, using local version"
+    if git fetch origin "$REPO_BRANCH" 2>/dev/null; then
+        LOCAL_HASH=$(git rev-parse HEAD 2>/dev/null || echo "")
+        REMOTE_HASH=$(git rev-parse origin/"$REPO_BRANCH" 2>/dev/null || echo "")
 
-        # Update clients/ and Solution/ if they have new files (without overwriting user data)
-        if [ -d ".git" ]; then
-            cd /app/src
-            # Copy new files from repo to volumes (without overwriting existing)
-            find clients/ -type f 2>/dev/null | while read f; do
-                [ ! -f "$f" ] && git checkout HEAD -- "$f" 2>/dev/null || true
-            done
-            find Solution/ -type f 2>/dev/null | while read f; do
-                [ ! -f "$f" ] && git checkout HEAD -- "$f" 2>/dev/null || true
-            done
+        if [ "$LOCAL_HASH" != "$REMOTE_HASH" ] && [ -n "$REMOTE_HASH" ]; then
+            echo "New version available (local: ${LOCAL_HASH:0:7}, remote: ${REMOTE_HASH:0:7})"
+            echo "Updating source code..."
+
+            if git pull origin "$REPO_BRANCH" 2>/dev/null; then
+                echo "✓ Source code updated successfully"
+
+                # Update clients/ and Solution/ if they have new files (without overwriting user data)
+                if [ -d ".git" ]; then
+                    cd /app/src
+                    # Copy new files from repo to volumes (without overwriting existing)
+                    find clients/ -type f 2>/dev/null | while read f; do
+                        [ ! -f "$f" ] && git checkout HEAD -- "$f" 2>/dev/null || true
+                    done
+                    find Solution/ -type f 2>/dev/null | while read f; do
+                        [ ! -f "$f" ] && git checkout HEAD -- "$f" 2>/dev/null || true
+                    done
+                fi
+            else
+                echo "✗ Update failed, using local version (${LOCAL_HASH:0:7})"
+            fi
+        else
+            echo "✓ Source code already up to date (${LOCAL_HASH:0:7})"
         fi
     else
-        echo "Source code already up to date"
+        echo "⚠ Cannot fetch updates (network issue or invalid remote)"
+        echo "Continuing with local version"
     fi
     cd /app
 fi
