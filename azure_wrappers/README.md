@@ -1,8 +1,8 @@
 # Azure Wrappers - Automation pour Déploiement Azure
 
-**Version:** 1.0.0
+**Version:** 1.1.0
 **Projet:** Aux Petits Oignons - Bot Traducteur
-**BMAD Story:** STORY-007 (Wrapper Python Azure CLI - Déploiement Translator F0)
+**BMAD Stories:** STORY-006 (Storage), STORY-007 (Translator F0)
 
 ---
 
@@ -12,7 +12,7 @@ Ce package Python fournit des wrappers pour automatiser le déploiement de resso
 
 **Modules disponibles:**
 - ✅ **translator** - Déploiement Azure Translator avec **SKU F0 UNIQUEMENT**
-- 🔜 **storage** - Déploiement Azure Storage Account (STORY-006)
+- ✅ **storage** - Déploiement Azure Storage Account avec SKU Standard_LRS
 - 🔜 **functions** - Déploiement Azure Functions (STORY-008)
 - ✅ **common** - Utilitaires partagés (erreurs, validation, sanitisation)
 
@@ -146,6 +146,175 @@ except AzureWrapperError as e:
 - ❌ **Quota dépassé** → "Quota Azure dépassé pour les services Cognitive Services"
 - ❌ **Resource Group inexistant** → "Le Resource Group 'X' n'existe pas"
 
+---
+
+## 💾 Module Storage - Déploiement Azure Storage Account
+
+### 1. Créer un Storage Account avec génération automatique de nom
+
+```python
+from azure_wrappers import create_storage_account
+
+# Créer un Storage Account avec nom automatique
+result = create_storage_account(
+    resource_group="rg-bot-traducteur-acme",
+    region="francecentral",  # Défaut: francecentral
+    tags={"client": "Acme Corp", "project": "Bot Traducteur"}
+)
+
+# Résultat
+print(result)
+# {
+#     "name": "tradbot3f2a260118",  # Nom unique généré automatiquement
+#     "id": "/subscriptions/.../resourceGroups/rg-bot-traducteur-acme/...",
+#     "endpoints": {
+#         "blob": "https://tradbot3f2a260118.blob.core.windows.net/",
+#         "file": "https://tradbot3f2a260118.file.core.windows.net/",
+#         "queue": "https://tradbot3f2a260118.queue.core.windows.net/",
+#         "table": "https://tradbot3f2a260118.table.core.windows.net/"
+#     },
+#     "access_keys": {
+#         "key1": "ZXhhbXBsZWtleTE...",  # Clé complète (SENSIBLE)
+#         "key2": "ZXhhbXBsZWtleTI...",
+#         "key1_display": "****************xyz1",  # Clé masquée
+#         "key2_display": "****************xyz2"
+#     },
+#     "region": "francecentral",
+#     "sku": "Standard_LRS",  # Locally Redundant Storage (économique)
+#     "kind": "StorageV2",
+#     "container_created": True,
+#     "container_name": "translations"
+# }
+
+# Afficher les informations (avec clés masquées)
+print(f"Storage Account: {result['name']}")
+print(f"Blob Endpoint: {result['endpoints']['blob']}")
+print(f"Access Key: {result['access_keys']['key1_display']}")
+print(f"Container: {result['container_name']}")
+```
+
+### 2. Créer un Storage Account avec nom personnalisé
+
+```python
+from azure_wrappers import create_storage_account
+
+# Créer avec un nom spécifique
+result = create_storage_account(
+    resource_group="rg-bot-traducteur-acme",
+    name="acmebottrad20260118",  # Nom personnalisé (3-24 chars, minuscules+chiffres)
+    region="francecentral",
+    create_container=True,  # Créer le container "translations" automatiquement
+    container_name="documents",  # Nom personnalisé du container
+    tags={"environment": "production"}
+)
+
+print(f"✅ Storage Account créé: {result['name']}")
+print(f"✅ Container créé: {result['container_name']}")
+```
+
+### 3. Créer uniquement un blob container dans un Storage existant
+
+```python
+from azure_wrappers import create_blob_container
+
+# Créer un nouveau container
+success = create_blob_container(
+    account_name="acmebottrad20260118",
+    container_name="backups",
+    account_key="ZXhhbXBsZWtleTE..."  # Clé d'accès du Storage Account
+)
+
+if success:
+    print("✅ Container 'backups' créé avec succès")
+```
+
+### 4. Vérifier qu'un Storage Account existe
+
+```python
+from azure_wrappers import verify_storage_account
+
+# Vérifier un Storage existant
+status = verify_storage_account(
+    name="acmebottrad20260118",
+    resource_group="rg-bot-traducteur-acme"
+)
+
+# Résultat
+print(status)
+# {
+#     "exists": True,
+#     "provisioning_state": "Succeeded",
+#     "sku": "Standard_LRS",
+#     "kind": "StorageV2",
+#     "region": "francecentral",
+#     "endpoints": {
+#         "blob": "https://acmebottrad20260118.blob.core.windows.net/"
+#     }
+# }
+
+# Vérifier l'état
+if status["provisioning_state"] == "Succeeded":
+    print("✅ Storage Account actif et opérationnel")
+```
+
+### 5. Supprimer un Storage Account
+
+```python
+from azure_wrappers import delete_storage_account
+
+# Supprimer (demande confirmation)
+success = delete_storage_account(
+    name="acmebottrad20260118",
+    resource_group="rg-bot-traducteur-acme",
+    confirm=True  # Confirmation explicite requise
+)
+
+if success:
+    print("✅ Storage Account supprimé")
+```
+
+### 6. Gestion des erreurs Storage
+
+```python
+from azure_wrappers import create_storage_account, AzureWrapperError
+
+try:
+    result = create_storage_account(
+        resource_group="rg-test",
+        name="invalid name with spaces"  # ❌ Nom invalide
+    )
+except AzureWrapperError as e:
+    print(f"Erreur: {e}")
+```
+
+**Erreurs gérées:**
+- ❌ **Nom invalide** → "Le nom doit contenir uniquement des lettres minuscules et des chiffres (3-24 caractères)"
+- ❌ **Nom déjà pris** → "Le nom 'X' n'est pas disponible (déjà utilisé)"
+- ❌ **Resource Group inexistant** → "Le Resource Group 'X' n'existe pas"
+- ❌ **Quota dépassé** → "Quota Azure dépassé pour les Storage Accounts"
+- ❌ **Région invalide** → "La région 'X' n'existe pas"
+
+### 7. Options de SKU pour Storage Account
+
+Le module utilise **Standard_LRS** par défaut (recommandé pour la plupart des cas):
+
+| SKU | Redondance | Coût | Usage recommandé |
+|-----|------------|------|------------------|
+| **Standard_LRS** (défaut) | Locale | € | ✅ Usage général, économique |
+| Standard_GRS | Géo-redondant | €€ | Haute disponibilité |
+| Standard_ZRS | Zone-redondant | €€ | Applications critiques |
+| Premium_LRS | Locale (SSD) | €€€ | Performance élevée |
+
+```python
+# Utiliser un SKU différent
+result = create_storage_account(
+    resource_group="rg-test",
+    sku="Standard_GRS"  # Redondance géographique
+)
+```
+
+---
+
 ### 4. Sanitisation des credentials
 
 ```python
@@ -213,10 +382,12 @@ azure_wrappers/
 ├── __init__.py           # Exports publics
 ├── common.py             # Utilitaires partagés
 ├── translator.py         # Module Translator (SKU F0)
+├── storage.py            # Module Storage Account (Standard_LRS)
 ├── README.md             # Cette documentation
 └── tests/
     ├── __init__.py
-    ├── test_translator.py  # Tests du module Translator
+    ├── test_translator.py  # Tests du module Translator (26 tests)
+    ├── test_storage.py     # Tests du module Storage (32 tests)
     └── requirements.txt    # Dépendances de test
 ```
 
@@ -240,6 +411,22 @@ azure_wrappers/
 | `create_translator()` | Crée un service Azure Translator **avec SKU F0** |
 | `verify_translator()` | Vérifie qu'un service existe et est actif |
 | `delete_translator()` | Supprime un service Translator |
+
+### Fonctions du module `storage`
+
+| Fonction | Description |
+|----------|-------------|
+| `create_storage_account()` | Crée un Azure Storage Account avec génération automatique de nom unique |
+| `create_blob_container()` | Crée un blob container dans un Storage Account existant |
+| `verify_storage_account()` | Vérifie qu'un Storage Account existe et est actif |
+| `delete_storage_account()` | Supprime un Storage Account (avec confirmation) |
+
+**Caractéristiques Storage:**
+- **Génération automatique de nom unique** respectant les contraintes Azure (3-24 chars, lowercase+chiffres)
+- **SKU Standard_LRS par défaut** (Locally Redundant Storage, économique)
+- **Container "translations" créé automatiquement** pour stocker les documents traduits
+- **Récupération des access keys** (avec affichage masqué pour sécurité)
+- **Validation de disponibilité du nom** avant création
 
 ---
 
@@ -458,6 +645,34 @@ def create_storage(
 ---
 
 ## 📝 Changelog
+
+### Version 1.1.0 (2026-01-18)
+
+**STORY-006 Completed: Wrapper Python Azure CLI - Déploiement Storage Account**
+
+- ✅ Implémentation `create_storage_account()` avec génération automatique de nom unique
+- ✅ Implémentation `create_blob_container()` pour créer des containers blob
+- ✅ Implémentation `verify_storage_account()` avec vérification de l'état
+- ✅ Implémentation `delete_storage_account()` avec confirmation obligatoire
+- ✅ Génération automatique de noms respectant les contraintes Azure (3-24 chars, lowercase+digits)
+- ✅ Validation de disponibilité du nom avant création (check-name)
+- ✅ SKU Standard_LRS par défaut (Locally Redundant Storage, économique)
+- ✅ Container "translations" créé automatiquement pour les documents traduits
+- ✅ Récupération et affichage sécurisé des access keys (masquage)
+- ✅ 32 tests unitaires (tous passing, couverture complète)
+- ✅ Documentation complète avec exemples d'utilisation
+
+**Acceptance Criteria:**
+- [x] Module `storage.py` créé avec fonctions de déploiement
+- [x] Fonction `create_storage_account()` implémentée
+- [x] Génération automatique de nom unique respectant contraintes Azure
+- [x] SKU Standard_LRS configuré par défaut (type StorageV2)
+- [x] Container "translations" créé automatiquement
+- [x] Access keys récupérées et retournées
+- [x] Gestion complète des erreurs (nom invalide, quota, etc.)
+- [x] Logs sanitisés (access keys masquées dans les affichages)
+
+---
 
 ### Version 1.0.0 (2026-01-18)
 
