@@ -108,19 +108,17 @@ def azure_connection():
 
     # Vérifier permissions
     print("\nVérification des permissions...")
-    permissions_ok, missing = check_permissions(
-        subscription_id=account["id"],
-        required_permissions=["Microsoft.Resources/deployments/write"]
-    )
+    permissions_result = check_permissions(subscription_id=account["id"])
 
-    if not permissions_ok:
+    if not permissions_result["has_permissions"]:
         pytest.fail(
             f"❌ Permissions insuffisantes.\n"
-            f"Permissions manquantes: {', '.join(missing)}\n"
-            f"Assurez-vous d'avoir au moins le rôle 'Contributor' sur la subscription."
+            f"{permissions_result['message']}\n"
+            f"Rôles trouvés: {', '.join(permissions_result['roles'])}\n"
+            f"Rôles requis: {', '.join(permissions_result['required_roles'])}"
         )
 
-    print("✅ Permissions OK")
+    print(f"✅ Permissions OK - Rôles: {', '.join(permissions_result['roles'])}")
 
     yield account
 
