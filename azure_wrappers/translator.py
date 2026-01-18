@@ -76,9 +76,16 @@ def _purge_soft_deleted_translators() -> int:
         for svc in translator_deleted:
             name = svc.get("name")
             location = svc.get("location")
-            resource_group = svc.get("resourceGroup", "")
-            
-            if not name or not location:
+
+            # Extraire le resource group de l'id
+            # Format: /subscriptions/.../resourceGroups/RG_NAME/deletedAccounts/...
+            svc_id = svc.get("id", "")
+            resource_group = ""
+            if "/resourceGroups/" in svc_id:
+                parts = svc_id.split("/resourceGroups/")[1].split("/")
+                resource_group = parts[0] if parts else ""
+
+            if not name or not location or not resource_group:
                 continue
             
             try:
@@ -217,17 +224,14 @@ def create_translator(
                 # Première tentative de résolution automatique
                 print()
                 print("⚠️  ERREUR: Quota F0 atteint (1 seul service Translator F0 autorisé par subscription)")
-                purged = _purge_soft_deleted_translators()
+                _purge_soft_deleted_translators()
 
-                if purged > 0:
-                    print("🔄 Nouvelle tentative de création après purge...")
-                    retry_attempted = True
-                    continue  # Réessayer la boucle
-                else:
-                    raise AzureWrapperError(
-                        "Quota F0 atteint et aucun service soft-deleted à purger. "
-                        "Vérifiez qu'il n'existe pas déjà un service Translator F0 actif."
-                    ) from e
+                # Toujours réessayer une fois, même si le purge a échoué
+                # (le service peut avoir été purgé manuellement ou il y a un délai de propagation)
+                print("🔄 Nouvelle tentative de création...")
+                print()
+                retry_attempted = True
+                continue  # Réessayer la boucle
 
             elif "QuotaExceeded" in error_msg or "quota" in error_msg.lower():
                 raise AzureWrapperError(
