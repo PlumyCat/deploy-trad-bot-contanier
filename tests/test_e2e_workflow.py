@@ -228,6 +228,17 @@ class TestE2EWorkflow:
     Les tests sont exécutés dans l'ordre grâce aux numéros de test.
     """
 
+    # Class variables pour partager les données entre les tests
+    storage_name: str = None
+    storage_key: str = None
+    translator_name: str = None
+    translator_key: str = None
+    translator_endpoint: str = None
+    function_app_name: str = None
+    function_app_url: str = None
+    report_path: str = None
+    report_content: str = None
+
     @pytest.mark.order(1)
     def test_01_connection_and_permissions(self, azure_connection):
         """
@@ -286,9 +297,9 @@ class TestE2EWorkflow:
 
         print(f"✅ Test 2 réussi: Storage Account déployé avec container")
 
-        # Stocker pour tests suivants
-        self.storage_name = storage_name
-        self.storage_key = storage_key
+        # Stocker pour tests suivants (class variables)
+        self.__class__.storage_name = storage_name
+        self.__class__.storage_key = storage_key
 
     @pytest.mark.order(3)
     def test_03_deploy_translator_sku_f0(self, azure_connection, test_resource_group):
@@ -341,10 +352,10 @@ class TestE2EWorkflow:
 
         print(f"✅ Test 3 réussi: Translator déployé avec SKU F0 confirmé")
 
-        # Stocker pour tests suivants
-        self.translator_name = translator_name
-        self.translator_key = translator_key
-        self.translator_endpoint = verify_result["endpoint"]
+        # Stocker pour tests suivants (class variables)
+        self.__class__.translator_name = translator_name
+        self.__class__.translator_key = translator_key
+        self.__class__.translator_endpoint = verify_result["endpoint"]
 
     @pytest.mark.order(4)
     def test_04_deploy_function_app(self, azure_connection, test_resource_group):
@@ -363,8 +374,8 @@ class TestE2EWorkflow:
         subscription_id = azure_connection["id"]
 
         # S'assurer que storage_name et translator_key existent
-        assert hasattr(self, "storage_name"), "Test 2 doit être exécuté avant Test 4"
-        assert hasattr(self, "translator_key"), "Test 3 doit être exécuté avant Test 4"
+        assert self.__class__.storage_name is not None, "Test 2 doit être exécuté avant Test 4"
+        assert self.__class__.translator_key is not None, "Test 3 doit être exécuté avant Test 4"
 
         # Créer Function App avec nom unique
         function_app_name = f"test-func-{random.randint(1000, 9999)}"
@@ -374,7 +385,7 @@ class TestE2EWorkflow:
         function_result = create_function_app(
             name=function_app_name,
             resource_group=test_resource_group,
-            storage_account=self.storage_name,
+            storage_account=self.__class__.storage_name,
             region=TEST_REGION,
         )
 
@@ -397,9 +408,9 @@ class TestE2EWorkflow:
 
         print(f"✅ Test 4 réussi: Function App déployé et vérifié")
 
-        # Stocker pour tests suivants
-        self.function_app_name = function_app_name
-        self.function_app_url = f"https://{verify_result['default_hostname']}"
+        # Stocker pour tests suivants (class variables)
+        self.__class__.function_app_name = function_app_name
+        self.__class__.function_app_url = f"https://{verify_result['default_hostname']}"
 
     @pytest.mark.order(5)
     def test_05_generate_report(self, azure_connection, test_resource_group):
@@ -417,9 +428,9 @@ class TestE2EWorkflow:
         print("-" * 80)
 
         # S'assurer que toutes les ressources existent
-        assert hasattr(self, "storage_name"), "Test 2 doit être exécuté avant Test 5"
-        assert hasattr(self, "translator_name"), "Test 3 doit être exécuté avant Test 5"
-        assert hasattr(self, "function_app_name"), "Test 4 doit être exécuté avant Test 5"
+        assert self.__class__.storage_name is not None, "Test 2 doit être exécuté avant Test 5"
+        assert self.__class__.translator_name is not None, "Test 3 doit être exécuté avant Test 5"
+        assert self.__class__.function_app_name is not None, "Test 4 doit être exécuté avant Test 5"
 
         subscription_id = azure_connection["id"]
 
@@ -429,11 +440,11 @@ class TestE2EWorkflow:
             "subscription_id": subscription_id,
             "resource_group": test_resource_group,
             "region": TEST_REGION,
-            "storage_account": self.storage_name,
-            "translator_name": self.translator_name,
+            "storage_account": self.__class__.storage_name,
+            "translator_name": self.__class__.translator_name,
             "translator_sku": "F0",  # IMPORTANT: SKU F0 vérifié dans test 3
-            "function_app_name": self.function_app_name,
-            "function_app_url": self.function_app_url,
+            "function_app_name": self.__class__.function_app_name,
+            "function_app_url": self.__class__.function_app_url,
         }
 
         # Générer le rapport
@@ -447,10 +458,10 @@ class TestE2EWorkflow:
         # Vérifications du contenu du rapport
         print("Vérification du contenu du rapport...")
         assert "TEST-E2E-Client" in report
-        assert self.storage_name in report
-        assert self.translator_name in report
+        assert self.__class__.storage_name in report
+        assert self.__class__.translator_name in report
         assert "F0" in report  # SKU F0 doit apparaître dans le rapport
-        assert self.function_app_name in report
+        assert self.__class__.function_app_name in report
         assert test_resource_group in report
 
         print("✅ Rapport généré avec toutes les informations")
@@ -470,9 +481,9 @@ class TestE2EWorkflow:
 
         print(f"✅ Test 5 réussi: Rapport généré et sauvegardé")
 
-        # Stocker pour vérification finale
-        self.report_path = report_path
-        self.report_content = report
+        # Stocker pour vérification finale (class variables)
+        self.__class__.report_path = report_path
+        self.__class__.report_content = report
 
     @pytest.mark.order(6)
     def test_06_cleanup_verification(self, azure_connection, test_resource_group):
@@ -548,10 +559,10 @@ class TestE2EWorkflow:
         print("=" * 80)
         print("\n📊 Résumé du workflow E2E:")
         print(f"   ✅ Connexion Azure validée")
-        print(f"   ✅ Storage Account déployé: {self.storage_name}")
-        print(f"   ✅ Translator déployé avec SKU F0: {self.translator_name}")
-        print(f"   ✅ Function App déployé: {self.function_app_name}")
-        print(f"   ✅ Rapport généré: {self.report_path}")
+        print(f"   ✅ Storage Account déployé: {self.__class__.storage_name}")
+        print(f"   ✅ Translator déployé avec SKU F0: {self.__class__.translator_name}")
+        print(f"   ✅ Function App déployé: {self.__class__.function_app_name}")
+        print(f"   ✅ Rapport généré: {self.__class__.report_path}")
         print(f"   ✅ {resource_count} ressources créées")
         print("\n🧹 Cleanup:")
         print(f"   Le groupe de ressources '{test_resource_group}' sera supprimé automatiquement")
