@@ -27,6 +27,7 @@ import subprocess
 import time
 import json
 import sys
+import random
 from pathlib import Path
 
 # Ajouter le dossier parent au path pour importer azure_wrappers
@@ -271,46 +272,23 @@ class TestE2EWorkflow:
         storage_result = create_storage_account(
             resource_group=test_resource_group,
             region=TEST_REGION,
-            subscription_id=subscription_id,
-            prefix=TEST_PREFIX,
+            name=None,  # Génération automatique du nom
         )
 
-        assert storage_result["success"] is True
         assert "name" in storage_result
-        assert storage_result["name"].startswith(TEST_PREFIX)
+        assert "access_keys" in storage_result
+        assert storage_result["container_created"] is True
 
         storage_name = storage_result["name"]
+        storage_key = storage_result["access_keys"]["key1"]
         print(f"✅ Storage Account créé: {storage_name}")
+        print(f"✅ Container blob créé: {storage_result['container_name']}")
 
-        # Créer blob container
-        print("Création blob container...")
-        container_result = create_blob_container(
-            storage_account_name=storage_name,
-            container_name="documents",
-            resource_group=test_resource_group,
-            subscription_id=subscription_id,
-        )
-
-        assert container_result["success"] is True
-        print(f"✅ Blob container créé: documents")
-
-        # Vérifier Storage Account
-        print("Vérification Storage Account...")
-        verify_result = verify_storage_account(
-            storage_account_name=storage_name,
-            resource_group=test_resource_group,
-            subscription_id=subscription_id,
-        )
-
-        assert verify_result["exists"] is True
-        assert "account_key" in verify_result
-        assert verify_result["account_key"] is not None
-        print(f"✅ Storage Account vérifié et fonctionnel")
-
-        print(f"✅ Test 2 réussi: Storage Account déployé et vérifié")
+        print(f"✅ Test 2 réussi: Storage Account déployé avec container")
 
         # Stocker pour tests suivants
         self.storage_name = storage_name
+        self.storage_key = storage_key
 
     @pytest.mark.order(3)
     def test_03_deploy_translator_sku_f0(self, azure_connection, test_resource_group):
@@ -328,79 +306,44 @@ class TestE2EWorkflow:
 
         subscription_id = azure_connection["id"]
 
-        # Créer Translator
+        # Créer Translator avec nom unique
+        translator_name = f"test-trans-{random.randint(1000, 9999)}"
         print(f"Création Translator avec SKU F0 dans {test_resource_group}...")
+        print(f"   Nom: {translator_name}")
+
         translator_result = create_translator(
+            name=translator_name,
             resource_group=test_resource_group,
             region=TEST_REGION,
-            subscription_id=subscription_id,
-            prefix=TEST_PREFIX,
         )
 
-        assert translator_result["success"] is True
         assert "name" in translator_result
+        assert "key" in translator_result
+        assert translator_result["sku"] == "F0"
 
-        translator_name = translator_result["name"]
+        translator_key = translator_result["key"]
         print(f"✅ Translator créé: {translator_name}")
+        print(f"✅ SKU F0 confirmé (gratuit - 2M caractères/mois)")
 
-        # 🔴 VÉRIFICATION CRITIQUE: SKU F0
-        print("\n🔴 VÉRIFICATION CRITIQUE: SKU Translator")
-
-        # Récupérer les détails du Translator pour vérifier le SKU
-        cmd_show = [
-            "az", "cognitiveservices", "account", "show",
-            "--name", translator_name,
-            "--resource-group", test_resource_group,
-            "--subscription", subscription_id,
-            "--output", "json",
-        ]
-
-        try:
-            result = subprocess.run(
-                cmd_show,
-                capture_output=True,
-                text=True,
-                check=True,
-                timeout=30
-            )
-            translator_details = json.loads(result.stdout)
-            actual_sku = translator_details["sku"]["name"]
-
-            print(f"   SKU détecté: {actual_sku}")
-
-            # ASSERTION CRITIQUE
-            assert actual_sku == "F0", (
-                f"❌ ÉCHEC CRITIQUE: SKU Translator incorrect!\n"
-                f"   Attendu: F0 (gratuit)\n"
-                f"   Obtenu: {actual_sku}\n"
-                f"   ⚠️  RISQUE: Coût client si SKU payant (S0 = 35$/mois minimum)"
-            )
-
-            print(f"   ✅ SKU F0 confirmé (gratuit)")
-
-        except subprocess.CalledProcessError as e:
-            pytest.fail(f"❌ Échec récupération détails Translator: {e.stderr}")
-        except json.JSONDecodeError:
-            pytest.fail(f"❌ Échec parsing JSON des détails Translator")
-
-        # Vérifier Translator
+        # 🔴 VÉRIFICATION CRITIQUE: SKU F0 (déjà confirmé par create_translator)
+        # Vérifier Translator (double-check SKU F0)
         print("\nVérification Translator...")
         verify_result = verify_translator(
-            translator_name=translator_name,
+            name=translator_name,
             resource_group=test_resource_group,
-            subscription_id=subscription_id,
         )
 
         assert verify_result["exists"] is True
-        assert "key" in verify_result
-        assert "endpoint" in verify_result
-        print(f"✅ Translator vérifié et fonctionnel")
+        assert verify_result["sku_is_f0"] is True, (
+            f"❌ Double-check ÉCHEC: SKU devrait être F0, obtenu {verify_result['sku']}"
+        )
+        print(f"✅ Translator vérifié: SKU F0 double-confirmé")
 
         print(f"✅ Test 3 réussi: Translator déployé avec SKU F0 confirmé")
 
         # Stocker pour tests suivants
         self.translator_name = translator_name
-        self.translator_key = verify_result["key"]
+        self.translator_key = translator_key
         self.translator_endpoint = verify_result["endpoint"]
 
     @pytest.mark.order(4)
@@ -423,34 +366,34 @@ class TestE2EWorkflow:
         assert hasattr(self, "storage_name"), "Test 2 doit être exécuté avant Test 4"
         assert hasattr(self, "translator_key"), "Test 3 doit être exécuté avant Test 4"
 
-        # Créer Function App
+        # Créer Function App avec nom unique
+        function_app_name = f"test-func-{random.randint(1000, 9999)}"
         print(f"Création Function App dans {test_resource_group}...")
+        print(f"   Nom: {function_app_name}")
+
         function_result = create_function_app(
+            name=function_app_name,
             resource_group=test_resource_group,
+            storage_account=self.storage_name,
             region=TEST_REGION,
-            storage_account_name=self.storage_name,
-            subscription_id=subscription_id,
-            prefix=TEST_PREFIX,
         )
 
-        assert function_result["success"] is True
         assert "name" in function_result
+        assert "default_hostname" in function_result
 
-        function_app_name = function_result["name"]
         print(f"✅ Function App créé: {function_app_name}")
+        print(f"   URL: https://{function_result['default_hostname']}")
 
         # Vérifier Function App
         print("Vérification Function App...")
         verify_result = verify_function_app(
-            function_app_name=function_app_name,
+            name=function_app_name,
             resource_group=test_resource_group,
-            subscription_id=subscription_id,
         )
 
         assert verify_result["exists"] is True
-        assert "default_hostname" in verify_result
-        print(f"✅ Function App vérifié et fonctionnel")
-        print(f"   URL: https://{verify_result['default_hostname']}")
+        assert verify_result["state"] == "Running"
+        print(f"✅ Function App vérifié: état {verify_result['state']}")
 
         print(f"✅ Test 4 réussi: Function App déployé et vérifié")
 
