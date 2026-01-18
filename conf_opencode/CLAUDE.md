@@ -167,6 +167,36 @@ Quand une commande Azure CLI échoue :
    Je vais générer un nouveau nom unique...
    ```
 
+5. **Format structuré des messages d'erreur** :
+
+   Pour toutes les erreurs, utiliser le format suivant :
+
+   ```
+   ❌ Problème: [Description claire de l'erreur en français]
+
+   💡 Solution: [Action concrète à réaliser]
+   ```
+
+   **Exemples :**
+
+   ```
+   ❌ Problème: Le nom "tradbot-storage" est déjà utilisé par un autre compte Azure.
+
+   💡 Solution: Je vais générer un nouveau nom unique avec un suffixe aléatoire.
+   ```
+
+   ```
+   ❌ Problème: Votre compte n'a pas la permission "Microsoft.Translator/create".
+
+   💡 Solution: Contactez votre administrateur Azure pour obtenir le rôle "Contributor" sur le groupe de ressources.
+   ```
+
+   ```
+   ❌ Problème: La région "westeurope" n'est pas disponible pour Azure Translator F0.
+
+   💡 Solution: Je vais utiliser la région "francecentral" qui supporte le SKU F0 gratuit.
+   ```
+
 ---
 
 ### Sanitisation des Logs
