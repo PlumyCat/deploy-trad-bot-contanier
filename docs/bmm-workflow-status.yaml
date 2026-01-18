@@ -1,0 +1,144 @@
+# BMM Workflow Status - Aux Petits Oignons
+# Generated: 2026-01-17T00:00:00Z
+# Project Level: 2 (Medium - 5-15 stories)
+
+project:
+  name: "Aux Petits Oignons"
+  type: "other"
+  level: 2
+  description: "Deployment automation tool for Copilot Studio translator bot with Azure integration"
+
+# Workflow phases and their statuses
+# Status values: not-started | in-progress | completed | skipped
+# Requirement values: required | recommended | optional
+
+phases:
+  # Phase 1: Discovery & Requirements
+  phase_1_discovery:
+    name: "Discovery & Requirements"
+    workflows:
+      product_brief:
+        name: "Product Brief"
+        status: "completed"
+        requirement: "recommended"
+        agent: "Business Analyst"
+        command: "/product-brief"
+        output: "docs/product-brief-aux-petits-oignons-2026-01-18.md"
+
+      brainstorm:
+        name: "Brainstorming Session"
+        status: "not-started"
+        requirement: "optional"
+        agent: "Creative Intelligence"
+        command: "/brainstorm"
+        output: "docs/brainstorm-session.md"
+
+      research:
+        name: "Research & Analysis"
+        status: "not-started"
+        requirement: "optional"
+        agent: "Creative Intelligence"
+        command: "/research"
+        output: "docs/research/"
+
+  # Phase 2: Planning & Design
+  phase_2_planning:
+    name: "Planning & Design"
+    workflows:
+      prd:
+        name: "Product Requirements Document"
+        status: "completed"
+        requirement: "required"  # Required for Level 2+
+        agent: "Product Manager"
+        command: "/prd"
+        output: "docs/prd-aux-petits-oignons-2026-01-18.md"
+        prerequisites: ["product_brief"]
+
+      tech_spec:
+        name: "Technical Specification"
+        status: "not-started"
+        requirement: "optional"  # Optional for Level 2 (PRD is primary)
+        agent: "Product Manager"
+        command: "/tech-spec"
+        output: "docs/tech-spec.md"
+
+  # Phase 3: Architecture
+  phase_3_architecture:
+    name: "Architecture & Design"
+    workflows:
+      architecture:
+        name: "System Architecture"
+        status: "completed"
+        requirement: "required"  # Required for Level 2+
+        agent: "System Architect"
+        command: "/architecture"
+        output: "docs/architecture-aux-petits-oignons-2026-01-18.md"
+        prerequisites: ["prd"]
+
+      create_ux_design:
+        name: "UX Design"
+        status: "not-started"
+        requirement: "optional"
+        agent: "UX Designer"
+        command: "/create-ux-design"
+        output: "docs/ux-design/"
+
+      solutioning_gate_check:
+        name: "Solutioning Gate Check"
+        status: "not-started"
+        requirement: "optional"
+        agent: "System Architect"
+        command: "/solutioning-gate-check"
+        output: "docs/solutioning-gate-check.md"
+        prerequisites: ["architecture"]
+
+  # Phase 4: Implementation
+  phase_4_implementation:
+    name: "Story Creation & Development"
+    workflows:
+      sprint_planning:
+        name: "Sprint Planning"
+        status: "completed"
+        requirement: "required"
+        agent: "Scrum Master"
+        command: "/sprint-planning"
+        output: "docs/sprint-plan-aux-petits-oignons-2026-01-18.md"
+        prerequisites: ["architecture"]
+
+      create_story:
+        name: "Create User Story"
+        status: "not-started"
+        requirement: "required"
+        agent: "Scrum Master"
+        command: "/create-story"
+        output: "docs/stories/STORY-XXX/"
+        note: "Run for each story identified in sprint planning"
+
+      dev_story:
+        name: "Develop Story"
+        status: "not-started"
+        requirement: "required"
+        agent: "Developer"
+        command: "/dev-story"
+        output: "Code implementation + tests"
+        prerequisites: ["create_story"]
+        note: "Run for each story to implement and test"
+
+# Progress tracking
+progress:
+  phase_1_complete: true
+  phase_2_complete: true
+  phase_3_complete: true
+  phase_4_complete: false  # Sprint planning done, implementation in progress
+  overall_progress: 80  # Percentage (sprint planning complete, ready for dev)
+
+# Recommended next step
+next_recommended_workflow: "dev_story"
+next_recommended_command: "/dev-story STORY-000"
+
+# Metadata
+metadata:
+  created_at: "2026-01-17T00:00:00Z"
+  updated_at: "2026-01-18T00:00:00Z"
+  bmad_version: "6.0"
+  last_completed_workflow: "sprint_planning"

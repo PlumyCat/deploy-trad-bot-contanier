@@ -1,0 +1,192 @@
+# Sprint Status - Aux Petits Oignons
+# Generated: 2026-01-18
+# BMAD Method v6
+
+version: "6.0.0"
+project_name: "Aux Petits Oignons"
+project_level: 2
+current_sprint: 1
+sprint_plan_path: "docs/sprint-plan-aux-petits-oignons-2026-01-18.md"
+
+sprints:
+  - sprint_number: 1
+    start_date: "2026-01-20"
+    end_date: "2026-01-31"
+    capacity_points: 30
+    committed_points: 27
+    completed_points: 2
+    status: "in_progress"
+    goal: "Établir l'infrastructure de base et l'environnement d'installation complet avec OpenCode configuré"
+    stories:
+      - story_id: "STORY-000"
+        title: "Setup Environnement de Développement"
+        points: 2
+        status: "completed"
+        assigned_to: "Eric"
+        epic: "Infrastructure"
+        priority: "Must Have"
+        completed_date: "2026-01-18"
+      - story_id: "STORY-001"
+        title: "Créer Installeur Windows .exe avec Inno Setup"
+        points: 5
+        status: "not_started"
+        assigned_to: "Eric"
+        epic: "EPIC-001"
+        priority: "Must Have"
+      - story_id: "STORY-002"
+        title: "Script PowerShell Exclusions Defender ASR"
+        points: 3
+        status: "not_started"
+        assigned_to: "Eric"
+        epic: "EPIC-001"
+        priority: "Must Have"
+      - story_id: "STORY-003"
+        title: "Configuration et Build du Container Docker"
+        points: 8
+        status: "not_started"
+        assigned_to: "Eric"
+        epic: "EPIC-001"
+        priority: "Must Have"
+      - story_id: "STORY-004"
+        title: "Script de Démarrage Automatique (start.bat)"
+        points: 3
+        status: "not_started"
+        assigned_to: "Eric"
+        epic: "EPIC-001"
+        priority: "Must Have"
+      - story_id: "STORY-005"
+        title: "Ouverture Automatique Terminal et Navigateur"
+        points: 2
+        status: "not_started"
+        assigned_to: "Eric"
+        epic: "EPIC-001"
+        priority: "Must Have"
+      - story_id: "STORY-012"
+        title: "Clone Automatique Repo trad-bot-src au Démarrage"
+        points: 2
+        status: "not_started"
+        assigned_to: "Eric"
+        epic: "EPIC-003"
+        priority: "Must Have"
+      - story_id: "STORY-013"
+        title: "Configuration OpenCode avec Prompts Conversationnels"
+        points: 2
+        status: "not_started"
+        assigned_to: "Eric"
+        epic: "EPIC-003"
+        priority: "Must Have"
+
+  - sprint_number: 2
+    start_date: "2026-02-03"
+    end_date: "2026-02-14"
+    capacity_points: 30
+    committed_points: 26
+    completed_points: 0
+    status: "not_started"
+    goal: "Implémenter l'automatisation complète du déploiement Azure avec Storage, Translator F0, et Functions"
+    stories:
+      - story_id: "STORY-006"
+        title: "Wrapper Python Azure CLI - Déploiement Storage Account"
+        points: 5
+        status: "not_started"
+        assigned_to: "Eric"
+        epic: "EPIC-002"
+        priority: "Must Have"
+      - story_id: "STORY-007"
+        title: "Wrapper Python Azure CLI - Déploiement Translator F0"
+        points: 5
+        status: "not_started"
+        assigned_to: "Eric"
+        epic: "EPIC-002"
+        priority: "Must Have (CRITICAL)"
+      - story_id: "STORY-008"
+        title: "Wrapper Python Azure CLI - Déploiement Azure Functions"
+        points: 8
+        status: "not_started"
+        assigned_to: "Eric"
+        epic: "EPIC-002"
+        priority: "Must Have"
+      - story_id: "STORY-009"
+        title: "Support Multi-comptes Azure dans OpenCode"
+        points: 3
+        status: "not_started"
+        assigned_to: "Eric"
+        epic: "EPIC-002"
+        priority: "Must Have"
+      - story_id: "STORY-011"
+        title: "Serveur Flask pour Documentation Power Platform"
+        points: 5
+        status: "not_started"
+        assigned_to: "Eric"
+        epic: "EPIC-003"
+        priority: "Must Have"
+
+  - sprint_number: 3
+    start_date: "2026-02-17"
+    end_date: "2026-02-28"
+    capacity_points: 30
+    committed_points: 17
+    completed_points: 0
+    status: "not_started"
+    goal: "Finaliser la documentation, le reporting, et valider le système complet end-to-end"
+    stories:
+      - story_id: "STORY-010"
+        title: "Documentation et Guidance MFA dans OpenCode"
+        points: 2
+        status: "not_started"
+        assigned_to: "Eric"
+        epic: "EPIC-002"
+        priority: "Should Have"
+      - story_id: "STORY-014"
+        title: "Interface Conversationnelle Française OpenCode"
+        points: 2
+        status: "not_started"
+        assigned_to: "Eric"
+        epic: "EPIC-003"
+        priority: "Must Have"
+      - story_id: "STORY-015"
+        title: "Génération Automatique Rapport d'Intervention"
+        points: 3
+        status: "not_started"
+        assigned_to: "Eric"
+        epic: "EPIC-004"
+        priority: "Must Have"
+      - story_id: "STORY-016"
+        title: "Template de Rapport Formaté pour Ticketing"
+        points: 2
+        status: "not_started"
+        assigned_to: "Eric"
+        epic: "EPIC-004"
+        priority: "Should Have"
+      - story_id: "STORY-INF-001"
+        title: "Tests End-to-End du Workflow Complet"
+        points: 8
+        status: "not_started"
+        assigned_to: "Eric"
+        epic: "Infrastructure"
+        priority: "Should Have"
+
+velocity:
+  sprint_1: null  # Will be filled when sprint completes
+  sprint_2: null
+  sprint_3: null
+  rolling_average: null
+
+team:
+  size: 1
+  sprint_length_weeks: 2
+  capacity_per_sprint: 30
+  experience_level: "senior"
+  productive_hours_per_day: 6
+
+metadata:
+  created_at: "2026-01-18"
+  updated_at: "2026-01-18"
+  bmad_version: "6.0"
+  scrum_master: "Eric"
+
+notes:
+  - "Sprint 3 has intentional buffer (13 points) for E2E test corrections"
+  - "STORY-007 is CRITICAL - SKU F0 must be hardcoded and thoroughly tested"
+  - "All dependencies are satisfied in the current sprint allocation"
+  - "Definition of Done includes Windows 10/11 testing and French language validation"

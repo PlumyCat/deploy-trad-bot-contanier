@@ -1,0 +1,34 @@
+# BMAD Method v6 - Project Configuration
+# Generated: 2026-01-17
+
+project_name: "Aux Petits Oignons"
+project_type: "other"  # Deployment automation tool (Docker container + Azure deployment)
+project_level: 2
+
+output_folder: "docs"
+
+bmm:
+  workflow_status_file: "docs/bmm-workflow-status.yaml"
+  sprint_status_file: "docs/sprint-status.yaml"
+
+paths:
+  docs: "docs"
+  stories: "docs/stories"
+  tests: "tests"
+  bmad: "bmad"
+  agent_overrides: "bmad/agent-overrides"
+
+# Project-specific settings
+settings:
+  # Azure/Docker deployment automation tool
+  description: "Deployment container with OpenCode, Azure CLI, and documentation for deploying Copilot Studio translator bot to client tenants"
+
+  # Key technologies
+  technologies:
+    - Docker
+    - Azure Functions
+    - Azure Translator
+    - Copilot Studio
+    - Power Platform
+    - Python
+    - OpenCode AI Agent
