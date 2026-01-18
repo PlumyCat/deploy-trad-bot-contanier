@@ -1,0 +1,22 @@
+services:
+  trad-bot:
+    # Utilise l'image Docker Hub si disponible, sinon build local
+    image: becloud/aux-petits-oignons:latest
+    build: .
+    container_name: trad-bot-opencode
+    volumes:
+      # Code source (clone depuis GitHub dans C:\AuxPetitsOignons\src)
+      - C:/AuxPetitsOignons/src:/app/src
+      # Donnees client
+      - C:/AuxPetitsOignons/clients:/app/clients
+      - C:/AuxPetitsOignons/Solution:/app/Solution
+      # Configuration OpenCode
+      - ./conf_opencode:/app/conf_opencode_mount
+      # Partage les credentials Azure de Windows -> pas de device login !
+      - ${USERPROFILE}/.azure:/root/.azure
+    ports:
+      - "5545:8080"
+    stdin_open: true
+    tty: true
+    working_dir: /app/src
+    command: bash -c "python /app/doc_server.py & exec bash"

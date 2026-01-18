@@ -1,0 +1,16 @@
+# Secrets
+conf_opencode/.env
+
+# Docker
+*.log
+
+# Inno Setup output
+installer/output/
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# Temp files
+*.tmp
+*.bak
