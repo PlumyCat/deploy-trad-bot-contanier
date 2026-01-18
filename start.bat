@@ -123,21 +123,31 @@ echo(
 echo Ouverture de la documentation..
 start http://localhost:5545/procedure
 
+echo Ouverture d'OpenCode dans une nouvelle fenetre..
+start cmd /k "docker exec -it trad-bot-opencode opencode"
+
 echo(
 echo ========================================
 echo   Container pret !
 echo ========================================
 echo(
-echo   Commandes disponibles :
+echo   Une fenetre OpenCode s'est ouverte automatiquement
+echo   Le navigateur affiche la documentation Power Platform
 echo(
-echo     opencode      - Nouvelle conversation
-echo     opencode -c   - REPRENDRE la conversation precedente
+echo   Dans la fenetre OpenCode :
+echo     - Tapez vos questions ou demandes
+echo     - Pour reprendre : fermez et relancez start.bat
+echo       puis tapez: opencode -c
 echo(
-echo   Si la conversation a ete coupee, utilisez: opencode -c
+echo   Pour arreter le container :
+echo     - Fermez cette fenetre OU tapez Ctrl+C
 echo(
 echo ========================================
 echo(
-docker exec -it trad-bot-opencode bash
+echo Fenetre de controle (ne pas fermer pendant utilisation)
+echo Appuyez sur Ctrl+C pour arreter le container
+echo(
+pause >nul
 
 :: ========================================
 :: Nettoyage a la sortie
