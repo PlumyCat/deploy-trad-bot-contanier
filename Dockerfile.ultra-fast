@@ -1,0 +1,104 @@
+# syntax=docker/dockerfile:1
+# ============================================
+# VERSION ULTRA-RAPIDE sans azure-functions-core-tools-4 via apt
+# ============================================
+
+# ============================================
+# STAGE 1: BUILDER
+# ============================================
+FROM ubuntu:24.04 AS builder
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
+    apt-get update && apt-get install -y \
+    python3-pip python3-venv build-essential
+
+WORKDIR /app
+COPY requirements.txt .
+RUN --mount=type=cache,target=/root/.cache/pip \
+    python3 -m venv venv && \
+    . venv/bin/activate && \
+    pip install -r requirements.txt markdown flask requests
+
+# ============================================
+# STAGE 2: RUNTIME
+# ============================================
+FROM ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Packages système de base
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
+    apt-get update && apt-get install -y \
+    python3 curl wget git rsync jq zip unzip \
+    gnupg lsb-release software-properties-common apt-transport-https ca-certificates
+
+# Azure CLI
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
+    curl -sL https://aka.ms/InstallAzureCLIDeb | bash
+
+# ============================================
+# Azure Functions Core Tools - VERSION BINAIRE (RAPIDE!)
+# Téléchargement direct au lieu de apt (gain: 2-3 min)
+# ============================================
+RUN curl -fsSL https://github.com/Azure/azure-functions-core-tools/releases/download/4.0.5907/Azure.Functions.Cli.linux-x64.4.0.5907.zip -o /tmp/func.zip && \
+    unzip -q /tmp/func.zip -d /opt/azure-functions-cli && \
+    chmod +x /opt/azure-functions-cli/func && \
+    ln -s /opt/azure-functions-cli/func /usr/local/bin/func && \
+    rm /tmp/func.zip
+
+# Node.js + OpenCode
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
+    --mount=type=cache,target=/root/.npm \
+    curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y nodejs && \
+    npm install -g opencode-ai@latest
+
+# Verify
+RUN az --version | head -5 && \
+    func --version && \
+    opencode --version
+
+WORKDIR /app
+
+COPY --from=builder /app/venv /app/venv
+
+RUN mkdir -p /root/.config/opencode
+COPY conf_opencode/opencode.json /root/.config/opencode/
+COPY conf_opencode/.env* /root/.config/opencode/
+RUN if [ ! -f /root/.config/opencode/.env ]; then \
+    cp /root/.config/opencode/.env.example /root/.config/opencode/.env 2>/dev/null || true; \
+    fi
+
+COPY doc_server.py /app/doc_server.py
+
+ENV VIRTUAL_ENV=/app/venv
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+
+RUN echo '\n\
+echo ""\n\
+echo "========================================"\n\
+echo "  🧅 Aux Petits Oignons - Be-Cloud"\n\
+echo "========================================"\n\
+echo ""\n\
+echo "  opencode      Nouvelle conversation"\n\
+echo "  opencode -c   REPRENDRE conversation"\n\
+echo ""\n\
+echo "  az-update     Mettre a jour Azure CLI"\n\
+echo ""\n\
+echo "========================================"\n\
+echo ""\n\
+' >> /root/.bashrc
+
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+EXPOSE 8080
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+CMD ["bash"]

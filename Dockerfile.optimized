@@ -1,0 +1,137 @@
+# syntax=docker/dockerfile:1
+# ============================================
+# STAGE 1: BUILDER (avec pip pour construire venv)
+# ============================================
+FROM ubuntu:24.04 AS builder
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Installation Python et outils de build avec CACHE MOUNT
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
+    apt-get update && apt-get install -y \
+    python3-pip \
+    python3-venv \
+    build-essential
+
+# Créer le venv et installer les dépendances Python avec CACHE MOUNT
+WORKDIR /app
+COPY requirements.txt .
+RUN --mount=type=cache,target=/root/.cache/pip \
+    python3 -m venv venv && \
+    . venv/bin/activate && \
+    pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir markdown flask requests
+
+# ============================================
+# STAGE 2: RUNTIME (image finale optimisée)
+# ============================================
+FROM ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# ============================================
+# Installation packages système avec CACHE MOUNT
+# ============================================
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
+    apt-get update && apt-get install -y \
+    python3 \
+    curl wget git rsync jq zip unzip \
+    gnupg lsb-release software-properties-common apt-transport-https ca-certificates
+
+# ============================================
+# Azure CLI avec CACHE MOUNT
+# ============================================
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
+    curl -sL https://aka.ms/InstallAzureCLIDeb | bash
+
+# ============================================
+# .NET 8 SDK avec CACHE MOUNT
+# ============================================
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
+    wget -q https://packages.microsoft.com/config/ubuntu/24.04/packages-microsoft-prod.deb && \
+    dpkg -i packages-microsoft-prod.deb && \
+    rm packages-microsoft-prod.deb && \
+    apt-get update && \
+    apt-get install -y dotnet-sdk-8.0
+
+# ============================================
+# Azure Functions Core Tools v4 avec CACHE MOUNT
+# CRITIQUE: C'est le plus long (2-3 min incompressibles)
+# ============================================
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
+    apt-get update && \
+    apt-get install -y azure-functions-core-tools-4
+
+# ============================================
+# Node.js + OpenCode avec CACHE MOUNT
+# ============================================
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
+    --mount=type=cache,target=/root/.npm \
+    curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y nodejs && \
+    npm install -g opencode-ai@latest
+
+# Verify installations
+RUN echo "=== Verification des installations ===" && \
+    az --version | head -5 && \
+    func --version && \
+    which opencode && opencode --version
+
+WORKDIR /app
+
+# ============================================
+# Copier le venv depuis le builder
+# ============================================
+COPY --from=builder /app/venv /app/venv
+
+# ============================================
+# Configuration OpenCode
+# ============================================
+RUN mkdir -p /root/.config/opencode
+
+COPY conf_opencode/opencode.json /root/.config/opencode/
+COPY conf_opencode/.env* /root/.config/opencode/
+RUN if [ ! -f /root/.config/opencode/.env ]; then \
+    cp /root/.config/opencode/.env.example /root/.config/opencode/.env 2>/dev/null || true; \
+    fi
+
+# Copy documentation server
+COPY doc_server.py /app/doc_server.py
+
+# Activate venv by default
+ENV VIRTUAL_ENV=/app/venv
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+
+# ============================================
+# Message de bienvenue
+# ============================================
+RUN echo '\n\
+echo ""\n\
+echo "========================================"\n\
+echo "  🧅 Aux Petits Oignons - Be-Cloud"\n\
+echo "========================================"\n\
+echo ""\n\
+echo "  opencode      Nouvelle conversation"\n\
+echo "  opencode -c   REPRENDRE conversation"\n\
+echo ""\n\
+echo "  az-update     Mettre a jour Azure CLI"\n\
+echo ""\n\
+echo "========================================"\n\
+echo ""\n\
+' >> /root/.bashrc
+
+# Copy and setup entrypoint
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+# Expose port for documentation server
+EXPOSE 8080
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+CMD ["bash"]
