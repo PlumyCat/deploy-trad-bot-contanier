@@ -98,9 +98,9 @@ echo(
 docker stop trad-bot-opencode >nul 2>&1
 docker rm trad-bot-opencode >nul 2>&1
 
-:: Demarrer le container (avec --force-recreate pour garantir l'execution de l'entrypoint)
+:: Demarrer le container
 echo Attente que le container soit pret (health check)..
-docker-compose up -d --force-recreate --wait
+docker-compose up -d --wait
 if errorlevel 1 (
     echo(
     echo ========================================
@@ -124,7 +124,7 @@ echo Ouverture de la documentation..
 start http://localhost:5545/procedure
 
 echo Ouverture d'OpenCode dans une nouvelle fenetre..
-start cmd /k "docker exec -it trad-bot-opencode opencode"
+start cmd /k "docker exec -it trad-bot-opencode bash -c \"set -a; source /root/.config/opencode/.env 2>/dev/null; set +a; opencode\""
 
 echo(
 echo ========================================

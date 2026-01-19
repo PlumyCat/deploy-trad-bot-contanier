@@ -1,0 +1,53 @@
+# Git
+.git/
+.gitignore
+.gitattributes
+.github/
+
+# Metadata
+.claude/
+.serena/
+.bmad/
+.vscode/
+.idea/
+
+# Installer (Inno Setup)
+installer/output/
+installer/*.obj
+installer/*.res
+
+# Documentation
+docs/
+README*.md
+*.md
+
+# Python cache
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/.pytest_cache/
+**/*.egg-info/
+azure_wrappers/tests/
+
+# Logs et temp
+*.log
+*.tmp
+docker-debug.log
+docker-logs.txt
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# Config locale (sera montée en volume)
+conf_opencode/.env
+conf_opencode/credentials.encrypted
+
+# Scripts Windows (non utilisés dans le container)
+*.bat
+scripts/*.ps1
+
+# Docker
+docker-compose.yml
+Dockerfile
+.dockerignore

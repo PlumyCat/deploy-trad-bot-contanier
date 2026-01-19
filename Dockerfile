@@ -1,54 +1,53 @@
 # ============================================
-# Aux Petits Oignons - Container Docker
+# STAGE 1: BUILDER (avec pip pour construire venv)
 # ============================================
-# Container Ubuntu 24.04 pre-configure avec:
-# - OpenCode (AI agent pour deploiement Azure)
-# - Azure CLI (derniere version)
-# - Azure Functions Core Tools v4
-# - Flask (serveur documentation)
-# - Python 3.11+ avec venv
-#
-# Objectifs:
-# - Build < 5 minutes
-# - Demarrage < 2 minutes
-# - Taille < 2GB
-#
-# Story: STORY-003 (8 points)
-# ============================================
+FROM ubuntu:24.04 AS builder
 
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Installation Python et outils de build (uniquement pour builder)
+RUN apt-get update && apt-get install -y \
+    python3-pip \
+    python3-venv \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Créer le venv et installer les dépendances Python
+WORKDIR /app
+COPY requirements.txt .
+RUN python3 -m venv venv && \
+    . venv/bin/activate && \
+    pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir markdown flask requests && \
+    pip cache purge
+
+# ============================================
+# STAGE 2: RUNTIME (image finale optimisée)
+# ============================================
 FROM ubuntu:24.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install system dependencies
+# ============================================
+# Installation CONSOLIDÉE de TOUS les packages
+# ============================================
 RUN apt-get update && apt-get install -y \
-    python3-pip \
-    python3-venv \
-    curl \
-    wget \
-    git \
-    rsync \
-    gnupg \
-    lsb-release \
-    software-properties-common \
-    apt-transport-https \
-    ca-certificates \
-    unzip \
-    jq \
-    zip \
-    build-essential \
-    libssl-dev \
-    libffi-dev \
-    python3-dev \
+    # Python runtime (PAS build-essential)
+    python3 \
+    # Outils système
+    curl wget git rsync jq zip unzip \
+    # Pour repositories externes
+    gnupg lsb-release software-properties-common apt-transport-https ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 # ============================================
-# Install Azure CLI
+# Azure CLI (installation + nettoyage)
 # ============================================
-RUN curl -sL https://aka.ms/InstallAzureCLIDeb | bash
+RUN curl -sL https://aka.ms/InstallAzureCLIDeb | bash && \
+    rm -rf /var/lib/apt/lists/*
 
 # ============================================
-# Install .NET 8 SDK (requis par Azure Functions)
+# .NET 8 SDK (requis par Azure Functions Core Tools)
 # ============================================
 RUN wget -q https://packages.microsoft.com/config/ubuntu/24.04/packages-microsoft-prod.deb && \
     dpkg -i packages-microsoft-prod.deb && \
@@ -58,19 +57,21 @@ RUN wget -q https://packages.microsoft.com/config/ubuntu/24.04/packages-microsof
     rm -rf /var/lib/apt/lists/*
 
 # ============================================
-# Install Azure Functions Core Tools v4
+# Azure Functions Core Tools v4
+# CRITIQUE: C'est le plus long, mais NÉCESSAIRE
 # ============================================
 RUN apt-get update && \
     apt-get install -y azure-functions-core-tools-4 && \
     rm -rf /var/lib/apt/lists/*
 
 # ============================================
-# Install Node.js and OpenCode
+# Node.js + OpenCode (installation + nettoyage agressif)
 # ============================================
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
     apt-get install -y nodejs && \
     npm install -g opencode-ai@latest && \
-    rm -rf /var/lib/apt/lists/*
+    npm cache clean --force && \
+    rm -rf ~/.npm /tmp/npm* /var/lib/apt/lists/*
 
 # Verify installations
 RUN echo "=== Verification des installations ===" && \
@@ -80,25 +81,21 @@ RUN echo "=== Verification des installations ===" && \
 
 WORKDIR /app
 
-# Copy and install Python dependencies
-COPY requirements.txt .
-RUN python3 -m venv venv && \
-    . venv/bin/activate && \
-    pip install --no-cache-dir -r requirements.txt && \
-    pip install markdown flask requests
+# ============================================
+# Copier le venv depuis le builder (économise espace)
+# ============================================
+COPY --from=builder /app/venv /app/venv
 
-# Create OpenCode config directory
+# ============================================
+# Configuration OpenCode
+# ============================================
 RUN mkdir -p /root/.config/opencode
 
-# Copy OpenCode configuration files
-# Use .env if it exists, otherwise use .env.example as fallback
 COPY conf_opencode/opencode.json /root/.config/opencode/
 COPY conf_opencode/.env* /root/.config/opencode/
 RUN if [ ! -f /root/.config/opencode/.env ]; then \
     cp /root/.config/opencode/.env.example /root/.config/opencode/.env 2>/dev/null || true; \
     fi
-
-# Source code will be cloned from GitHub at runtime by entrypoint.sh
 
 # Copy documentation server
 COPY doc_server.py /app/doc_server.py
@@ -107,11 +104,13 @@ COPY doc_server.py /app/doc_server.py
 ENV VIRTUAL_ENV=/app/venv
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
-# Message de bienvenue dans le container
+# ============================================
+# Message de bienvenue
+# ============================================
 RUN echo '\n\
 echo ""\n\
 echo "========================================"\n\
-echo "  🧅 Aux Petits Oignons"\n\
+echo "  🧅 Aux Petits Oignons - Be-Cloud"\n\
 echo "========================================"\n\
 echo ""\n\
 echo "  opencode      Nouvelle conversation"\n\
@@ -127,9 +126,9 @@ echo ""\n\
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-# Expose port for documentation server (Flask)
-# Note: Mapped to 5545 externally via docker-compose.yml
-# Access documentation at http://localhost:5545/procedure
+# Copy OpenCode wrapper (removed from Dockerfile, using entrypoint function instead)
+
+# Expose port for documentation server
 EXPOSE 8080
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

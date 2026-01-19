@@ -96,9 +96,6 @@ else
     cd /app
 fi
 
-# Alias pour mise à jour facile
-echo 'alias az-update="az upgrade --yes"' >> /root/.bashrc
-
 # Copy config files from mounted volume to config directory with correct permissions
 if [ -d /app/conf_opencode_mount ]; then
     echo "Copying OpenCode configuration..."
@@ -114,7 +111,27 @@ if [ -d /app/conf_opencode_mount ]; then
     # Fix permissions
     chmod -R 755 /root/.config/opencode
     chmod 644 /root/.config/opencode/* 2>/dev/null || true
+
+    # Convert Windows line endings (CRLF) to Unix (LF) if needed
+    if [ -f /root/.config/opencode/.env ]; then
+        echo "Converting line endings..."
+        tr -d '\r' < /root/.config/opencode/.env > /root/.config/opencode/.env.unix
+        mv /root/.config/opencode/.env.unix /root/.config/opencode/.env
+    fi
 fi
+
+# Alias pour mise à jour facile
+echo 'alias az-update="az upgrade --yes"' >> /root/.bashrc
+
+# Fonction pour opencode avec chargement automatique du .env
+cat >> /root/.bashrc <<'BASHRC_EOF'
+opencode() {
+    set -a
+    source /root/.config/opencode/.env 2>/dev/null
+    set +a
+    command opencode "$@"
+}
+BASHRC_EOF
 
 # Execute the command
 exec "$@"

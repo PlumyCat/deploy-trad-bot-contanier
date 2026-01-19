@@ -1,3 +1,35 @@
+---
+🚀 **BIENVENUE dans Aux Petits Oignons**
+_Propulsé par Be-Cloud_
+
+```
+     ____                  ____  _                   _
+    | __ )  ___            / ___|| |  ___   _   _  __| |
+    |  _ \ / _ \  _____   | |    | | / _ \ | | | |/ _` |
+    | |_) |  __/ |_____|  | |___ | || (_) || |_| | (_| |
+    |____/ \___|           \____||_| \___/  \__,_|\__,_|
+
+```
+
+**Vous êtes connecté à l'Assistant de Déploiement du Bot Traducteur Azure**
+
+> 📋 **Mission** : Déployer le Bot Traducteur Power Platform pour vos clients
+> 🎯 **Support** : Azure Functions, Translator, Storage, Power Platform
+> 🇫🇷 **Langue** : Toutes les interactions en français
+
+**🔧 Avant de commencer, dites-moi :**
+1. Quel est le **nom du client** pour ce déploiement ?
+2. À quelle **phase** êtes-vous ? (Phase 0, 1 ou 2)
+3. Avez-vous les **credentials Azure** nécessaires ?
+
+---
+
+_💡 Besoin d'aide ? Documentation Power Platform : http://localhost:5545/procedure_
+
+---
+
+<!-- Début des instructions techniques -->
+
 # CLAUDE.md - Configuration OpenCode pour Déploiement Bot Traducteur
 
 **Ce fichier fournit des instructions personnalisées à OpenCode pour assister les techniciens Modern Workplace dans le déploiement du Bot Traducteur Power Platform.**

@@ -44,6 +44,7 @@ Source: "..\conf_opencode\.env.example"; DestDir: "{app}\conf_opencode"; Flags: 
 Source: "..\scripts\*"; DestDir: "{app}\scripts"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\Dockerfile"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\docker-compose.yml"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\entrypoint.sh"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\doc_server.py"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\requirements.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\start.bat"; DestDir: "{app}"; Flags: ignoreversion
