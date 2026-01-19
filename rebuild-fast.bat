@@ -21,12 +21,13 @@ docker rmi deploy-trad-bot-contanier-trad-bot-opencode 2>nul
 echo.
 echo Choisissez la version :
 echo.
-echo   1. BuildKit + Cache Mounts     [9-10 min] (RECOMMANDE)
-echo   2. Binaire func direct         [7-8 min]  (EXPERIMENTAL)
-echo   3. Image Microsoft avec func   [6-7 min]  (NOUVEAU!)
-echo   4. Build standard              [15 min]
+echo   1. BuildKit + Cache Mounts        [9-10 min] (STABLE)
+echo   2. Binaire func direct            [7-8 min]  (EXPERIMENTAL)
+echo   3. Image Microsoft avec func      [6-7 min]  (EXPERIMENTAL)
+echo   4. Fork Aux-petits-Oignons        [12-15 min] (CUSTOM) *** NOUVEAU ***
+echo   5. Build standard                 [15 min]
 echo.
-set /p CHOICE="Votre choix (1/2/3/4) : "
+set /p CHOICE="Votre choix (1/2/3/4/5) : "
 
 if "%CHOICE%"=="1" (
     echo.
@@ -118,6 +119,49 @@ if "%CHOICE%"=="1" (
         echo ========================================
         echo.
         docker images deploy-trad-bot-contanier-trad-bot-opencode
+        echo.
+        echo Pour demarrer: start.bat
+        echo.
+    ) else (
+        echo.
+        echo ERREUR lors du build
+        echo.
+    )
+) else if "%CHOICE%"=="4" (
+    echo.
+    echo ========================================
+    echo   Option 4: Fork Aux-petits-Oignons
+    echo ========================================
+    echo.
+    echo Version personnalisee avec:
+    echo   - 4 modeles Azure pre-configures
+    echo   - Welcome page Aux petits Oignons
+    echo   - Config entreprise verrouillee
+    echo.
+    echo Build avec Dockerfile.custom-opencode...
+    echo Debut: %TIME%
+    echo.
+
+    docker build -f Dockerfile.custom-opencode -t deploy-trad-bot-contanier-trad-bot-opencode:latest .
+
+    REM Verifier si l'image existe
+    docker images -q deploy-trad-bot-contanier-trad-bot-opencode:latest > nul 2>&1
+
+    if %ERRORLEVEL% EQU 0 (
+        echo.
+        echo Fin: %TIME%
+        echo.
+        echo ========================================
+        echo   BUILD REUSSI - FORK CUSTOM
+        echo ========================================
+        echo.
+        docker images deploy-trad-bot-contanier-trad-bot-opencode
+        echo.
+        echo IMPORTANT: N'oubliez pas de configurer .env avec:
+        echo   - ANTHROPIC_BASE_URL
+        echo   - ANTHROPIC_API_KEY
+        echo   - AZURE_OPENAI_ENDPOINT
+        echo   - AZURE_OPENAI_API_KEY
         echo.
         echo Pour demarrer: start.bat
         echo.
