@@ -33,11 +33,11 @@ RUN apk add --no-cache git
 
 WORKDIR /build
 
-# Cloner le fork Aux-petits-Oignons
-RUN git clone https://github.com/PlumyCat/Aux-petits-Oignons.git .
+# Cloner le fork Aux-petits-Oignons avec tout l'historique git (requis pour certaines dépendances)
+RUN git clone --depth 1 https://github.com/PlumyCat/Aux-petits-Oignons.git .
 
-# Installer les dépendances et build
-RUN bun install && \
+# Installer les dépendances avec le lockfile (évite les problèmes de résolution)
+RUN bun install --frozen-lockfile && \
     cd packages/opencode && \
     bun run build
 

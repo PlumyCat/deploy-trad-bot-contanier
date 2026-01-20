@@ -16,7 +16,7 @@ echo Arret du container...
 docker-compose down 2>nul
 
 echo Suppression de l'image existante...
-docker rmi deploy-trad-bot-contanier-trad-bot-opencode 2>nul
+docker rmi deploy-trad-bot-contanier-trad-bot-opencode:latest 2>nul
 
 echo.
 echo Choisissez la version :
@@ -29,161 +29,175 @@ echo   5. Build standard                 [15 min]
 echo.
 set /p CHOICE="Votre choix (1/2/3/4/5) : "
 
-if "%CHOICE%"=="1" (
-    echo.
-    echo ========================================
-    echo   Option 1: BuildKit Cache Mounts
-    echo ========================================
-    echo.
-    echo Build avec Dockerfile.optimized...
-    echo Debut: %TIME%
-    echo.
+REM Utiliser goto au lieu de if/else if imbriques
+if "%CHOICE%"=="1" goto :option1
+if "%CHOICE%"=="2" goto :option2
+if "%CHOICE%"=="3" goto :option3
+if "%CHOICE%"=="4" goto :option4
+if "%CHOICE%"=="5" goto :option5
+goto :invalid
 
-    docker build -f Dockerfile.optimized -t deploy-trad-bot-contanier-trad-bot-opencode:latest .
+:option1
+echo.
+echo ========================================
+echo   Option 1: BuildKit Cache Mounts
+echo ========================================
+echo.
+echo Build avec Dockerfile.optimized...
+echo Debut: %TIME%
+echo.
 
-    REM Verifier si l'image existe (plus fiable que ERRORLEVEL avec BuildKit)
-    docker images -q deploy-trad-bot-contanier-trad-bot-opencode:latest > nul 2>&1
+docker build -f Dockerfile.optimized -t deploy-trad-bot-contanier-trad-bot-opencode:latest .
 
-    if %ERRORLEVEL% EQU 0 (
-        echo.
-        echo Fin: %TIME%
-        echo.
-        echo ========================================
-        echo   BUILD REUSSI
-        echo ========================================
-        echo.
-        docker images deploy-trad-bot-contanier-trad-bot-opencode
-        echo.
-        echo Pour demarrer: start.bat
-        echo.
-    ) else (
-        echo.
-        echo ERREUR lors du build
-        echo.
-    )
-    goto :end
-) else if "%CHOICE%"=="2" (
-    echo.
-    echo ========================================
-    echo   Option 2: Version ULTRA-RAPIDE
-    echo ========================================
-    echo.
-    echo Build avec Dockerfile.ultra-fast...
-    echo Debut: %TIME%
-    echo.
+docker images -q deploy-trad-bot-contanier-trad-bot-opencode:latest > nul 2>&1
 
-    docker build -f Dockerfile.ultra-fast -t deploy-trad-bot-contanier-trad-bot-opencode:latest .
-
-    REM Verifier si l'image existe
-    docker images -q deploy-trad-bot-contanier-trad-bot-opencode:latest > nul 2>&1
-
-    if %ERRORLEVEL% EQU 0 (
-        echo.
-        echo Fin: %TIME%
-        echo.
-        echo ========================================
-        echo   BUILD REUSSI
-        echo ========================================
-        echo.
-        docker images deploy-trad-bot-contanier-trad-bot-opencode
-        echo.
-        echo Pour demarrer: start.bat
-        echo.
-    ) else (
-        echo.
-        echo ERREUR lors du build
-        echo.
-    )
-    goto :end
-) else if "%CHOICE%"=="3" (
-    echo.
-    echo ========================================
-    echo   Option 3: Image Microsoft MCR
-    echo ========================================
-    echo.
-    echo ATTENTION: Cette option est experimentale (Alpine Linux)
-    echo.
-    echo Build avec Dockerfile.from-mcr...
-    echo Debut: %TIME%
-    echo.
-
-    docker build -f Dockerfile.from-mcr -t deploy-trad-bot-contanier-trad-bot-opencode:latest .
-
-    REM Verifier si l'image existe
-    docker images -q deploy-trad-bot-contanier-trad-bot-opencode:latest > nul 2>&1
-
-    if %ERRORLEVEL% EQU 0 (
-        echo.
-        echo Fin: %TIME%
-        echo.
-        echo ========================================
-        echo   BUILD REUSSI
-        echo ========================================
-        echo.
-        docker images deploy-trad-bot-contanier-trad-bot-opencode
-        echo.
-        echo Pour demarrer: start.bat
-        echo.
-    ) else (
-        echo.
-        echo ERREUR lors du build
-        echo.
-    )
-    goto :end
-) else if "%CHOICE%"=="4" (
-    echo.
-    echo ========================================
-    echo   Option 4: Fork Aux-petits-Oignons
-    echo ========================================
-    echo.
-    echo Version personnalisee avec:
-    echo   - 4 modeles Azure pre-configures
-    echo   - Welcome page Aux petits Oignons
-    echo   - Config entreprise verrouillee
-    echo.
-    echo Build avec Dockerfile.custom-opencode...
-    echo Debut: %TIME%
-    echo.
-
-    docker build -f Dockerfile.custom-opencode -t deploy-trad-bot-contanier-trad-bot-opencode:latest .
-
-    REM Verifier si l'image existe
-    docker images -q deploy-trad-bot-contanier-trad-bot-opencode:latest > nul 2>&1
-
-    if %ERRORLEVEL% EQU 0 (
-        echo.
-        echo Fin: %TIME%
-        echo.
-        echo ========================================
-        echo   BUILD REUSSI - FORK CUSTOM
-        echo ========================================
-        echo.
-        docker images deploy-trad-bot-contanier-trad-bot-opencode
-        echo.
-        echo IMPORTANT: N'oubliez pas de configurer .env avec:
-        echo   - ANTHROPIC_BASE_URL
-        echo   - ANTHROPIC_API_KEY
-        echo   - AZURE_OPENAI_ENDPOINT
-        echo   - AZURE_OPENAI_API_KEY
-        echo.
-        echo Pour demarrer: start.bat
-        echo.
-    ) else (
-        echo.
-        echo ERREUR lors du build
-        echo.
-    )
-    goto :end
-) else (
-    echo.
-    echo Build standard...
-    echo Debut: %TIME%
-    echo.
-    docker-compose build --no-cache
+if %ERRORLEVEL% EQU 0 (
     echo.
     echo Fin: %TIME%
     echo.
+    echo ========================================
+    echo   BUILD REUSSI
+    echo ========================================
+    echo.
+    docker images deploy-trad-bot-contanier-trad-bot-opencode
+    echo.
+    echo Pour demarrer: start.bat
+    echo.
+) else (
+    echo.
+    echo ERREUR lors du build
+    echo.
 )
+goto :end
+
+:option2
+echo.
+echo ========================================
+echo   Option 2: Version ULTRA-RAPIDE
+echo ========================================
+echo.
+echo Build avec Dockerfile.ultra-fast...
+echo Debut: %TIME%
+echo.
+
+docker build -f Dockerfile.ultra-fast -t deploy-trad-bot-contanier-trad-bot-opencode:latest .
+
+docker images -q deploy-trad-bot-contanier-trad-bot-opencode:latest > nul 2>&1
+
+if %ERRORLEVEL% EQU 0 (
+    echo.
+    echo Fin: %TIME%
+    echo.
+    echo ========================================
+    echo   BUILD REUSSI
+    echo ========================================
+    echo.
+    docker images deploy-trad-bot-contanier-trad-bot-opencode
+    echo.
+    echo Pour demarrer: start.bat
+    echo.
+) else (
+    echo.
+    echo ERREUR lors du build
+    echo.
+)
+goto :end
+
+:option3
+echo.
+echo ========================================
+echo   Option 3: Image Microsoft MCR
+echo ========================================
+echo.
+echo ATTENTION: Cette option est experimentale (Alpine Linux)
+echo.
+echo Build avec Dockerfile.from-mcr...
+echo Debut: %TIME%
+echo.
+
+docker build -f Dockerfile.from-mcr -t deploy-trad-bot-contanier-trad-bot-opencode:latest .
+
+docker images -q deploy-trad-bot-contanier-trad-bot-opencode:latest > nul 2>&1
+
+if %ERRORLEVEL% EQU 0 (
+    echo.
+    echo Fin: %TIME%
+    echo.
+    echo ========================================
+    echo   BUILD REUSSI
+    echo ========================================
+    echo.
+    docker images deploy-trad-bot-contanier-trad-bot-opencode
+    echo.
+    echo Pour demarrer: start.bat
+    echo.
+) else (
+    echo.
+    echo ERREUR lors du build
+    echo.
+)
+goto :end
+
+:option4
+echo.
+echo ========================================
+echo   Option 4: Fork Aux-petits-Oignons
+echo ========================================
+echo.
+echo Version personnalisee avec:
+echo   - 4 modeles Azure pre-configures
+echo   - Welcome page Aux petits Oignons
+echo   - Config entreprise verrouillee
+echo.
+echo Build avec Dockerfile.custom-opencode...
+echo Debut: %TIME%
+echo.
+
+docker build -f Dockerfile.custom-opencode -t deploy-trad-bot-contanier-trad-bot-opencode:latest .
+
+docker images -q deploy-trad-bot-contanier-trad-bot-opencode:latest > nul 2>&1
+
+if %ERRORLEVEL% EQU 0 (
+    echo.
+    echo Fin: %TIME%
+    echo.
+    echo ========================================
+    echo   BUILD REUSSI - FORK CUSTOM
+    echo ========================================
+    echo.
+    docker images deploy-trad-bot-contanier-trad-bot-opencode
+    echo.
+    echo IMPORTANT: N'oubliez pas de configurer .env avec:
+    echo   - ANTHROPIC_BASE_URL
+    echo   - ANTHROPIC_API_KEY
+    echo   - AZURE_OPENAI_ENDPOINT
+    echo   - AZURE_OPENAI_API_KEY
+    echo   - AZURE_AI_FOUNDRY_ENDPOINT (optionnel)
+    echo.
+    echo Pour demarrer: start.bat
+    echo.
+) else (
+    echo.
+    echo ERREUR lors du build
+    echo.
+)
+goto :end
+
+:option5
+echo.
+echo Build standard...
+echo Debut: %TIME%
+echo.
+docker-compose build --no-cache
+echo.
+echo Fin: %TIME%
+echo.
+goto :end
+
+:invalid
+echo.
+echo Choix invalide! Veuillez choisir entre 1 et 5.
+echo.
 
 :end
 pause
