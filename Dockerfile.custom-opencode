@@ -106,11 +106,17 @@ COPY --from=builder-opencode /build/config/enterprise-config.json /root/.config/
 COPY --from=builder-opencode /build/.opencode/opencode.jsonc /root/.config/opencode/opencode.json
 COPY --from=builder-opencode /build/.env.example /root/.config/opencode/.env.example
 
-# Si .env existe localement, on le copie (sinon on utilise .env.example)
-COPY conf_opencode/.env* /root/.config/opencode/ 2>/dev/null || true
-RUN if [ ! -f /root/.config/opencode/.env ]; then \
-    cp /root/.config/opencode/.env.example /root/.config/opencode/.env 2>/dev/null || true; \
-    fi
+# Copier les fichiers .env s'ils existent (utiliser un script pour éviter l'erreur COPY)
+RUN mkdir -p /tmp/conf_copy
+COPY conf_opencode/ /tmp/conf_copy/
+RUN if [ -f /tmp/conf_copy/.env ]; then \
+        cp /tmp/conf_copy/.env /root/.config/opencode/.env; \
+    elif [ -f /tmp/conf_copy/.env.example.custom ]; then \
+        cp /tmp/conf_copy/.env.example.custom /root/.config/opencode/.env; \
+    else \
+        cp /root/.config/opencode/.env.example /root/.config/opencode/.env; \
+    fi && \
+    rm -rf /tmp/conf_copy
 
 # Copy documentation server
 COPY doc_server.py /app/doc_server.py
