@@ -61,6 +61,7 @@ if "%CHOICE%"=="1" (
         echo ERREUR lors du build
         echo.
     )
+    goto :end
 ) else if "%CHOICE%"=="2" (
     echo.
     echo ========================================
@@ -93,6 +94,7 @@ if "%CHOICE%"=="1" (
         echo ERREUR lors du build
         echo.
     )
+    goto :end
 ) else if "%CHOICE%"=="3" (
     echo.
     echo ========================================
@@ -127,6 +129,7 @@ if "%CHOICE%"=="1" (
         echo ERREUR lors du build
         echo.
     )
+    goto :end
 ) else if "%CHOICE%"=="4" (
     echo.
     echo ========================================
@@ -170,6 +173,7 @@ if "%CHOICE%"=="1" (
         echo ERREUR lors du build
         echo.
     )
+    goto :end
 ) else (
     echo.
     echo Build standard...
@@ -181,4 +185,5 @@ if "%CHOICE%"=="1" (
     echo.
 )
 
+:end
 pause
