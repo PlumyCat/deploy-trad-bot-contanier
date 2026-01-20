@@ -1,6 +1,66 @@
 #!/bin/bash
 set -e
 
+# ============================================
+# Build OpenCode Fork (au premier démarrage)
+# ============================================
+if [ ! -f "/opt/aux-petits-oignons/.build_done" ]; then
+    echo "=========================================="
+    echo "  Premier démarrage - Compilation du fork"
+    echo "  Aux Petits Oignons (OpenCode custom)"
+    echo "=========================================="
+    echo ""
+
+    cd /opt/aux-petits-oignons
+
+    echo "Installation des dépendances Bun..."
+    if bun install; then
+        echo "✓ Dépendances installées"
+
+        echo ""
+        echo "Configuration du fork OpenCode..."
+
+        # Créer un wrapper bash pour lancer OpenCode avec Bun
+        cat > /usr/local/bin/opencode <<'OPENCODE_WRAPPER'
+#!/bin/bash
+# Wrapper pour lancer le fork Aux-petits-Oignons avec Bun
+cd /opt/aux-petits-oignons/packages/opencode
+exec bun run --conditions=browser ./src/index.ts "$@"
+OPENCODE_WRAPPER
+        chmod +x /usr/local/bin/opencode
+
+        # Copier les fichiers de configuration entreprise
+        mkdir -p /root/.config/opencode
+
+        if [ -f /opt/aux-petits-oignons/config/enterprise-config.json ]; then
+            cp /opt/aux-petits-oignons/config/enterprise-config.json /root/.config/opencode/
+        fi
+
+        if [ -f /opt/aux-petits-oignons/.opencode/opencode.jsonc ]; then
+            cp /opt/aux-petits-oignons/.opencode/opencode.jsonc /root/.config/opencode/opencode.json
+        fi
+
+        if [ -f /opt/aux-petits-oignons/.env.example ]; then
+            cp /opt/aux-petits-oignons/.env.example /root/.config/opencode/.env.example
+        fi
+
+        # Marquer comme configuré
+        touch /opt/aux-petits-oignons/.build_done
+
+        echo "✓ Fork OpenCode configuré"
+        echo ""
+        echo "=========================================="
+        echo "  ✓ Fork Aux Petits Oignons prêt"
+        echo "=========================================="
+        echo ""
+    else
+        echo "✗ ERREUR lors de l'installation des dépendances"
+        echo "Le container continuera sans OpenCode custom"
+    fi
+
+    cd /app
+fi
+
 # Load repo configuration from file if it exists
 if [ -f "/app/repo-config.txt" ]; then
     echo "Loading repository configuration from repo-config.txt..."

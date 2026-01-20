@@ -24,22 +24,14 @@ RUN --mount=type=cache,target=/root/.cache/pip \
     pip install -r requirements.txt markdown flask requests
 
 # ============================================
-# STAGE 2: BUILDER OpenCode Fork (Bun)
+# STAGE 2: CLONER le fork (sans build)
 # ============================================
-FROM oven/bun:1.1.38-alpine AS builder-opencode
-
-# Installer git pour cloner le repo
-RUN apk add --no-cache git
+FROM alpine/git AS git-cloner
 
 WORKDIR /build
 
-# Cloner le fork Aux-petits-Oignons avec tout l'historique git (requis pour certaines dépendances)
-RUN git clone --depth 1 https://github.com/PlumyCat/Aux-petits-Oignons.git .
-
-# Installer les dépendances avec le lockfile (évite les problèmes de résolution)
-RUN bun install --frozen-lockfile && \
-    cd packages/opencode && \
-    bun run build
+# Cloner le fork Aux-petits-Oignons (on fera l'install au runtime)
+RUN git clone https://github.com/PlumyCat/Aux-petits-Oignons.git .
 
 # ============================================
 # STAGE 3: RUNTIME
@@ -69,52 +61,43 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     apt-get update && \
     apt-get install -y dotnet-sdk-8.0 azure-functions-core-tools-4
 
-# Node.js (requis pour exécuter le binaire OpenCode compilé)
+# Node.js (requis pour exécuter OpenCode)
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
     curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
     apt-get install -y nodejs
 
-# Installer Bun (requis pour exécuter OpenCode)
+# Installer Bun (requis pour build et exécution OpenCode)
 RUN curl -fsSL https://bun.sh/install | bash && \
     ln -s /root/.bun/bin/bun /usr/local/bin/bun
 
-# Copier le fork OpenCode compilé depuis le builder
-COPY --from=builder-opencode /build /opt/aux-petits-oignons
+# Copier le fork cloné (non compilé) depuis git-cloner
+COPY --from=git-cloner /build /opt/aux-petits-oignons
 
-# Créer un lien symbolique global pour opencode
-RUN ln -s /opt/aux-petits-oignons/packages/opencode/bin/opencode.cjs /usr/local/bin/opencode && \
-    chmod +x /usr/local/bin/opencode
+# Note: bun install + bun run build sera fait au démarrage dans entrypoint.sh
 
-# Verify installations
+# Verify installations de base
 RUN echo "=== Verification des installations ===" && \
     az --version | head -5 && \
     func --version && \
-    bun --version && \
-    opencode --version
+    bun --version
 
 WORKDIR /app
 
 # Copier le venv Python depuis builder
 COPY --from=builder-python /app/venv /app/venv
 
-# Configuration OpenCode - Utiliser la config du fork
+# Configuration OpenCode - Préparer le répertoire (les fichiers seront copiés au runtime)
 RUN mkdir -p /root/.config/opencode
 
-# Copier la configuration entreprise depuis le fork
-COPY --from=builder-opencode /build/config/enterprise-config.json /root/.config/opencode/
-COPY --from=builder-opencode /build/.opencode/opencode.jsonc /root/.config/opencode/opencode.json
-COPY --from=builder-opencode /build/.env.example /root/.config/opencode/.env.example
-
-# Copier les fichiers .env s'ils existent (utiliser un script pour éviter l'erreur COPY)
+# Copier les fichiers .env s'ils existent dans conf_opencode/
+# Note: les fichiers de config du fork seront copiés au runtime par entrypoint.sh
 RUN mkdir -p /tmp/conf_copy
 COPY conf_opencode/ /tmp/conf_copy/
 RUN if [ -f /tmp/conf_copy/.env ]; then \
         cp /tmp/conf_copy/.env /root/.config/opencode/.env; \
     elif [ -f /tmp/conf_copy/.env.example.custom ]; then \
         cp /tmp/conf_copy/.env.example.custom /root/.config/opencode/.env; \
-    else \
-        cp /root/.config/opencode/.env.example /root/.config/opencode/.env; \
     fi && \
     rm -rf /tmp/conf_copy
 
