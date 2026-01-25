@@ -59,7 +59,7 @@ Source: "..\requirements.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\repo-config.txt"; DestDir: "{app}"; Flags: ignoreversion
 
 ; Scripts principaux
-Source: "..\start-simple.bat"; DestDir: "{app}\start.bat"; Flags: ignoreversion
+Source: "..\start-simple.bat"; DestDir: "{app}"; DestName: "start.bat"; Flags: ignoreversion
 Source: "..\configure.bat"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\rebuild-fast.bat"; DestDir: "{app}"; Flags: ignoreversion
 
