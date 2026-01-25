@@ -194,18 +194,20 @@ begin
 
     // Message informatif apres installation
     if MsgBox('Installation terminée avec succès !' + #13#10 + #13#10 +
-           'Prochaines étapes :' + #13#10 +
-           '1. Lancez "Build Docker" (environ 2-3 min)' + #13#10 +
-           '2. Si nécessaire, configurez vos clés Azure dans conf_opencode\.env' + #13#10 +
-           '   (déjà pré-configuré avec les endpoints par défaut)' + #13#10 +
-           '3. Lancez "Aux petits oignons" pour démarrer' + #13#10 + #13#10 +
+           'Au premier lancement :' + #13#10 +
+           '- L''image Docker sera créée automatiquement (~2-3 min)' + #13#10 +
+           '- OpenCode s''installera au démarrage (~6 min)' + #13#10 +
+           '- Les lancements suivants seront instantanés' + #13#10 + #13#10 +
+           'Configuration :' + #13#10 +
+           '- Les clés Azure sont déjà pré-configurées' + #13#10 +
+           '- Pour modifier : Menu Démarrer > Configuration' + #13#10 + #13#10 +
            'Documentation :' + #13#10 +
-           '- Documentation Web : http://localhost:5545/procedure (une fois démarré)' + #13#10 +
+           '- Web : http://localhost:5545/procedure (une fois démarré)' + #13#10 +
            '- Guide de test : test-opencode-guide.md' + #13#10 + #13#10 +
-           'Voulez-vous lancer "Build Docker" maintenant ?',
+           'Voulez-vous lancer "Aux petits oignons" maintenant ?',
            mbConfirmation, MB_YESNO) = IDYES then
     begin
-      Exec(ExpandConstant('{app}\rebuild-fast.bat'), '', ExpandConstant('{app}'), SW_SHOWNORMAL, ewNoWait, ErrorCode);
+      Exec(ExpandConstant('{app}\start.bat'), '', ExpandConstant('{app}'), SW_SHOWNORMAL, ewNoWait, ErrorCode);
     end;
   end;
 end;

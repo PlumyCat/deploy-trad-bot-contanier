@@ -93,27 +93,45 @@ if errorlevel 1 (
 :: ========================================
 :: Verification image Docker
 :: ========================================
-docker images -q auxpetitsoignons-trad-bot:latest >nul 2>&1
+docker images auxpetitsoignons-trad-bot:latest | findstr "auxpetitsoignons-trad-bot" >nul 2>&1
 if errorlevel 1 (
     echo(
     echo ========================================
-    echo   Image Docker non trouvee
+    echo   Premier lancement - Build de l'image
     echo ========================================
     echo(
-    echo L'image Docker n'a pas encore ete creee.
-    echo Veuillez d'abord executer: rebuild-fast.bat
+    echo L'image Docker va etre creee (environ 2-3 minutes)
+    echo Puis installation OpenCode au demarrage (environ 6 minutes)
     echo(
-    set /p BUILD_NOW="Voulez-vous la creer maintenant ? (O/N) : "
-    if /i "%BUILD_NOW%"=="O" (
-        call "%SCRIPT_DIR%rebuild-fast.bat"
-        if errorlevel 1 (
-            echo(
-            echo Erreur lors du build
-            goto :cleanup
-        )
-    ) else (
+    echo Veuillez patienter...
+    echo(
+
+    cd "%SCRIPT_DIR%"
+
+    REM Activer BuildKit
+    set DOCKER_BUILDKIT=1
+    set COMPOSE_DOCKER_CLI_BUILD=1
+
+    echo Build de l'image Docker...
+    docker build -t auxpetitsoignons-trad-bot:latest . 2>&1
+
+    if errorlevel 1 (
+        echo(
+        echo ========================================
+        echo   ERREUR lors du build
+        echo ========================================
+        echo(
+        echo Verifiez que Docker Desktop est bien demarre
+        echo et que vous avez une connexion Internet
+        echo(
         goto :cleanup
     )
+
+    echo(
+    echo ========================================
+    echo   Build termine avec succes
+    echo ========================================
+    echo(
 )
 
 echo(
