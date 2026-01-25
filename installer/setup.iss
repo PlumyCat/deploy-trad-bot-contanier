@@ -60,6 +60,7 @@ Source: "..\repo-config.txt"; DestDir: "{app}"; Flags: ignoreversion
 
 ; Scripts principaux
 Source: "..\start.bat"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\launch-opencode.bat"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\configure.bat"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\rebuild-fast.bat"; DestDir: "{app}"; Flags: ignoreversion
 
