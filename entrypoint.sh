@@ -30,8 +30,18 @@ if [ ! -f "/opt/aux-petits-oignons/.build_done" ]; then
         cat > /usr/local/bin/opencode <<'OPENCODE_WRAPPER'
 #!/bin/bash
 # Wrapper pour lancer le fork Aux-petits-Oignons avec Bun
-# IMPORTANT: Forcer Bun à garder le répertoire de travail actuel
-exec bun --cwd="$(pwd)" run --conditions=browser /opt/aux-petits-oignons/packages/opencode/src/index.ts "$@"
+# Force le projet à être le répertoire courant
+WORK_DIR="$(pwd)"
+
+# Créer marqueur de projet OpenCode si pas déjà présent
+if [ ! -f "$WORK_DIR/.opencode/project.json" ]; then
+    mkdir -p "$WORK_DIR/.opencode"
+    echo '{"name":"trad-bot-src","root":"'$WORK_DIR'"}' > "$WORK_DIR/.opencode/project.json"
+fi
+
+# Lancer OpenCode depuis le répertoire de travail
+cd "$WORK_DIR"
+exec bun --conditions=browser /opt/aux-petits-oignons/packages/opencode/src/index.ts "$@"
 OPENCODE_WRAPPER
         chmod +x /usr/local/bin/opencode
 

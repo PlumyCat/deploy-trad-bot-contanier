@@ -139,8 +139,11 @@ COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 # Empêcher OpenCode de détecter le fork comme projet
-RUN echo "**/*" > /opt/aux-petits-oignons/.opencodeignore && \
-    echo "Ce dossier contient le fork OpenCode - PAS un projet utilisateur" > /opt/aux-petits-oignons/README-IGNORE.txt
+RUN mkdir -p /opt/aux-petits-oignons/.opencode && \
+    echo '{"ignore": true}' > /opt/aux-petits-oignons/.opencode/config.json && \
+    echo "**/*" > /opt/aux-petits-oignons/.opencodeignore && \
+    touch /opt/aux-petits-oignons/.git/info/exclude && \
+    echo "# OpenCode: Ce dossier n'est PAS un projet utilisateur" >> /opt/aux-petits-oignons/README.md
 
 # Copier le guide de projet pour OpenCode
 COPY CLAUDE-PROJET.md /app/CLAUDE.md
