@@ -42,6 +42,7 @@ Name: "{#MyDataDir}\Solution"; Permissions: users-full
 ; Configuration OpenCode
 Source: "..\conf_opencode\opencode.json"; DestDir: "{app}\conf_opencode"; Flags: ignoreversion
 Source: "..\conf_opencode\.env.example"; DestDir: "{app}\conf_opencode"; Flags: ignoreversion
+Source: "..\conf_opencode\.env"; DestDir: "{app}\conf_opencode"; Flags: onlyifdoesntexist uninsneveruninstall
 Source: "..\conf_opencode\CLAUDE.md"; DestDir: "{app}\conf_opencode"; Flags: ignoreversion
 
 ; Scripts
@@ -175,6 +176,8 @@ begin
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
+var
+  ErrorCode: Integer;
 begin
   if CurStep = ssPostInstall then
   begin
@@ -190,18 +193,20 @@ begin
       False);
 
     // Message informatif apres installation
-    MsgBox('Installation terminée avec succès !' + #13#10 + #13#10 +
+    if MsgBox('Installation terminée avec succès !' + #13#10 + #13#10 +
            'Prochaines étapes :' + #13#10 +
-           '1. Lancez "Build Docker (Menu)" pour choisir votre option' + #13#10 +
-           '   - Option 1-3 : OpenCode standard' + #13#10 +
-           '   - Option 4 : Fork sécurisé (recommandé pour clients)' + #13#10 +
-           '2. Configurez vos clés API Azure dans conf_opencode\.env' + #13#10 +
+           '1. Lancez "Build Docker" (environ 2-3 min)' + #13#10 +
+           '2. Si nécessaire, configurez vos clés Azure dans conf_opencode\.env' + #13#10 +
+           '   (déjà pré-configuré avec les endpoints par défaut)' + #13#10 +
            '3. Lancez "Aux petits oignons" pour démarrer' + #13#10 + #13#10 +
            'Documentation :' + #13#10 +
-           '- Guide Rapide Option 4 : Installation en 11 minutes' + #13#10 +
-           '- Documentation Option 4 : Guide complet du fork custom' + #13#10 + #13#10 +
-           'Tous les raccourcis sont disponibles dans le menu Démarrer.',
-           mbInformation, MB_OK);
+           '- Documentation Web : http://localhost:5545/procedure (une fois démarré)' + #13#10 +
+           '- Guide de test : test-opencode-guide.md' + #13#10 + #13#10 +
+           'Voulez-vous lancer "Build Docker" maintenant ?',
+           mbConfirmation, MB_YESNO) = IDYES then
+    begin
+      Exec(ExpandConstant('{app}\rebuild-fast.bat'), '', ExpandConstant('{app}'), SW_SHOWNORMAL, ewNoWait, ErrorCode);
+    end;
   end;
 end;
 
