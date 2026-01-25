@@ -19,7 +19,9 @@ if [ ! -f "/opt/aux-petits-oignons/.build_done" ]; then
 
         # Mettre à jour baseline-browser-mapping pour supprimer le warning obsolète
         echo "Mise à jour baseline-browser-mapping..."
-        bun update baseline-browser-mapping --silent 2>/dev/null || true
+        cd /opt/aux-petits-oignons/packages/opencode
+        bun update baseline-browser-mapping 2>/dev/null || true
+        cd /opt/aux-petits-oignons
 
         echo ""
         echo "Configuration du fork OpenCode..."

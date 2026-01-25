@@ -138,21 +138,38 @@ echo(
 echo Demarrage du container..
 echo(
 
-:: Arreter et supprimer le container existant s'il existe
-docker stop trad-bot-opencode >nul 2>&1
-docker rm trad-bot-opencode >nul 2>&1
-
-:: Demarrer le container
-docker-compose up -d
+:: Verifier si le container existe deja
+docker ps -a --filter "name=trad-bot-opencode" --format "{{.Names}}" | findstr "trad-bot-opencode" >nul 2>&1
 if errorlevel 1 (
-    echo(
-    echo ========================================
-    echo   ERREUR: Echec du demarrage Docker
-    echo ========================================
-    echo(
-    echo Verifiez les logs ci-dessus pour plus de details
-    echo(
-    goto :cleanup
+    :: Container n'existe pas, le creer
+    echo Creation du container...
+    docker-compose up -d
+    if errorlevel 1 (
+        echo(
+        echo ========================================
+        echo   ERREUR: Echec de la creation
+        echo ========================================
+        echo(
+        goto :cleanup
+    )
+) else (
+    :: Container existe, le demarrer
+    echo Demarrage du container existant...
+    docker start trad-bot-opencode >nul 2>&1
+    if errorlevel 1 (
+        echo(
+        echo Container corrompu, recreation...
+        docker rm trad-bot-opencode >nul 2>&1
+        docker-compose up -d
+        if errorlevel 1 (
+            echo(
+            echo ========================================
+            echo   ERREUR: Echec du demarrage
+            echo ========================================
+            echo(
+            goto :cleanup
+        )
+    )
 )
 
 echo(
@@ -197,7 +214,7 @@ echo Ouverture de la documentation..
 start http://localhost:5545/procedure
 
 echo Ouverture d'OpenCode dans une nouvelle fenetre..
-start cmd /k "docker exec -it trad-bot-opencode bash -c \"set -a; source /root/.config/opencode/.env 2>/dev/null; set +a; opencode\""
+start cmd /k "%~dp0launch-opencode.bat"
 
 echo(
 echo ========================================
@@ -232,9 +249,9 @@ echo   Session terminee
 echo ========================================
 echo(
 
-:: Arreter le container
+:: Arreter le container (sans le supprimer)
 echo Arret du container..
-docker-compose down >nul 2>&1
+docker stop trad-bot-opencode >nul 2>&1
 
 :: Supprimer le fichier .env en clair si on a un fichier chiffre
 if exist "%ENCRYPTED_FILE%" (
