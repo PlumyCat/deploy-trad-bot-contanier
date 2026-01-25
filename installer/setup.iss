@@ -1,9 +1,9 @@
 ; Script Inno Setup pour "Aux petits oignons"
 ; Bot Traducteur - Deployment Container
-; Version 1.2 - Clone depuis GitHub au demarrage
+; Version 1.3 - Fork OpenCode Custom + Build Options
 
 #define MyAppName "Aux petits oignons"
-#define MyAppVersion "1.2"
+#define MyAppVersion "1.3"
 #define MyAppPublisher "Be-Cloud"
 #define MyAppURL "https://be-cloud.fr"
 #define MyAppExeName "start.bat"
@@ -39,17 +39,48 @@ Name: "{#MyDataDir}\Solution"; Permissions: users-full
 
 [Files]
 ; Fichiers du projet (dans Program Files) - PAS de src/ !
+; Configuration OpenCode
 Source: "..\conf_opencode\opencode.json"; DestDir: "{app}\conf_opencode"; Flags: ignoreversion
 Source: "..\conf_opencode\.env.example"; DestDir: "{app}\conf_opencode"; Flags: ignoreversion
+Source: "..\conf_opencode\CLAUDE.md"; DestDir: "{app}\conf_opencode"; Flags: ignoreversion
+
+; Scripts
 Source: "..\scripts\*"; DestDir: "{app}\scripts"; Flags: ignoreversion recursesubdirs createallsubdirs
+
+; Dockerfiles (tous)
 Source: "..\Dockerfile"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\Dockerfile.optimized"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\Dockerfile.ultra-fast"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\Dockerfile.from-mcr"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\Dockerfile.custom-opencode"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\Dockerfile.custom-opencode-cached"; DestDir: "{app}"; Flags: ignoreversion
+
+; Docker config
 Source: "..\docker-compose.yml"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\entrypoint.sh"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\entrypoint-cached.sh"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\doc_server.py"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\requirements.txt"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\repo-config.txt"; DestDir: "{app}"; Flags: ignoreversion
+
+; Scripts principaux
 Source: "..\start.bat"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\configure.bat"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\repo-config.txt"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\rebuild-fast.bat"; DestDir: "{app}"; Flags: ignoreversion
+
+; Scripts PowerShell
+Source: "..\start-custom.ps1"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\test-opencode.ps1"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\measure-install-time.ps1"; DestDir: "{app}"; Flags: ignoreversion
+
+; Documentation
+Source: "..\README.md"; DestDir: "{app}"; Flags: ignoreversion isreadme
+Source: "..\README-OPTION4.md"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\README-BUILD-OPTIONS.md"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\QUICKSTART-OPTION4.md"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\test-opencode-guide.md"; DestDir: "{app}"; Flags: ignoreversion
+
+; Icône
 Source: "..\icone\oignon.ico"; DestDir: "{app}"; Flags: ignoreversion
 
 ; Les dossiers clients/ et Solution/ seront crees par start.bat
@@ -58,6 +89,9 @@ Source: "..\icone\oignon.ico"; DestDir: "{app}"; Flags: ignoreversion
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\oignon.ico"; WorkingDir: "{app}"
 Name: "{group}\Documentation (Web)"; Filename: "http://localhost:5545/procedure"; IconFilename: "{app}\oignon.ico"
+Name: "{group}\Documentation Option 4 (Fork Custom)"; Filename: "{app}\README-OPTION4.md"; IconFilename: "{app}\oignon.ico"
+Name: "{group}\Guide Rapide Option 4"; Filename: "{app}\QUICKSTART-OPTION4.md"; IconFilename: "{app}\oignon.ico"
+Name: "{group}\Build Docker (Menu)"; Filename: "{app}\rebuild-fast.bat"; IconFilename: "{app}\oignon.ico"; WorkingDir: "{app}"
 Name: "{group}\Solution Power Platform"; Filename: "{#MyDataDir}\Solution"; IconFilename: "{app}\oignon.ico"
 Name: "{group}\Rapports Clients"; Filename: "{#MyDataDir}\clients"; IconFilename: "{app}\oignon.ico"
 Name: "{group}\Configuration"; Filename: "{app}\configure.bat"; IconFilename: "{app}\oignon.ico"; WorkingDir: "{app}"
@@ -169,9 +203,14 @@ begin
     // Message informatif apres installation
     MsgBox('Installation terminée avec succès !' + #13#10 + #13#10 +
            'Prochaines étapes :' + #13#10 +
-           '1. Lancez "Configuration" depuis le menu Démarrer' + #13#10 +
-           '2. Entrez vos clés API (Azure Foundry et Tavily)' + #13#10 +
+           '1. Lancez "Build Docker (Menu)" pour choisir votre option' + #13#10 +
+           '   - Option 1-3 : OpenCode standard' + #13#10 +
+           '   - Option 4 : Fork sécurisé (recommandé pour clients)' + #13#10 +
+           '2. Configurez vos clés API Azure dans conf_opencode\.env' + #13#10 +
            '3. Lancez "Aux petits oignons" pour démarrer' + #13#10 + #13#10 +
+           'Documentation :' + #13#10 +
+           '- Guide Rapide Option 4 : Installation en 11 minutes' + #13#10 +
+           '- Documentation Option 4 : Guide complet du fork custom' + #13#10 + #13#10 +
            'Tous les raccourcis sont disponibles dans le menu Démarrer.',
            mbInformation, MB_OK);
   end;
