@@ -143,8 +143,7 @@ docker stop trad-bot-opencode >nul 2>&1
 docker rm trad-bot-opencode >nul 2>&1
 
 :: Demarrer le container
-echo Attente que le container soit pret (health check)..
-docker-compose up -d --wait
+docker-compose up -d
 if errorlevel 1 (
     echo(
     echo ========================================
@@ -154,6 +153,36 @@ if errorlevel 1 (
     echo Verifiez les logs ci-dessus pour plus de details
     echo(
     goto :cleanup
+)
+
+echo(
+echo Attente du demarrage du container...
+timeout /t 5 /nobreak >nul
+
+:: Verifier si c'est le premier demarrage (installation Bun)
+docker exec trad-bot-opencode test -f /opt/aux-petits-oignons/.build_done >nul 2>&1
+if errorlevel 1 (
+    echo(
+    echo ========================================
+    echo   PREMIER DEMARRAGE DETECTE
+    echo ========================================
+    echo(
+    echo Installation OpenCode en cours (environ 6 minutes)
+    echo Vous pouvez suivre la progression dans une autre fenetre avec:
+    echo   docker logs -f trad-bot-opencode
+    echo(
+    echo Attente de la fin de l'installation...
+
+    :wait_build
+    timeout /t 10 /nobreak >nul
+    docker exec trad-bot-opencode test -f /opt/aux-petits-oignons/.build_done >nul 2>&1
+    if errorlevel 1 goto :wait_build
+
+    echo(
+    echo ========================================
+    echo   Installation terminee
+    echo ========================================
+    echo(
 )
 
 :: Supprimer le fichier .env en clair immediatement apres le demarrage
