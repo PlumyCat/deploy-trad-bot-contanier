@@ -21,7 +21,7 @@ from flask import Flask, redirect, send_from_directory, abort, jsonify
 import markdown
 import os
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 
 app = Flask(__name__)
 
@@ -100,7 +100,7 @@ def health():
     return jsonify({
         "status": "healthy",
         "service": "documentation-server",
-        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "port": 8080,
         "endpoints": {
             "/": "Redirect to /procedure",
