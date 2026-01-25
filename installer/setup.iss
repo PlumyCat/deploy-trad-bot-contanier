@@ -1,9 +1,9 @@
 ; Script Inno Setup pour "Aux petits oignons"
 ; Bot Traducteur - Deployment Container
-; Version 1.3 - Fork OpenCode Custom + Build Options
+; Version 1.4 - Fork OpenCode Custom (simplifié)
 
 #define MyAppName "Aux petits oignons"
-#define MyAppVersion "1.3"
+#define MyAppVersion "1.4"
 #define MyAppPublisher "Be-Cloud"
 #define MyAppURL "https://be-cloud.fr"
 #define MyAppExeName "start.bat"
@@ -47,18 +47,12 @@ Source: "..\conf_opencode\CLAUDE.md"; DestDir: "{app}\conf_opencode"; Flags: ign
 ; Scripts
 Source: "..\scripts\*"; DestDir: "{app}\scripts"; Flags: ignoreversion recursesubdirs createallsubdirs
 
-; Dockerfiles (tous)
+; Dockerfile (Fork Aux-petits-Oignons)
 Source: "..\Dockerfile"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\Dockerfile.optimized"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\Dockerfile.ultra-fast"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\Dockerfile.from-mcr"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\Dockerfile.custom-opencode"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\Dockerfile.custom-opencode-cached"; DestDir: "{app}"; Flags: ignoreversion
 
 ; Docker config
 Source: "..\docker-compose.yml"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\entrypoint.sh"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\entrypoint-cached.sh"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\doc_server.py"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\requirements.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\repo-config.txt"; DestDir: "{app}"; Flags: ignoreversion
@@ -69,15 +63,11 @@ Source: "..\configure.bat"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\rebuild-fast.bat"; DestDir: "{app}"; Flags: ignoreversion
 
 ; Scripts PowerShell
-Source: "..\start-custom.ps1"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\test-opencode.ps1"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\measure-install-time.ps1"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\test-quick.bat"; DestDir: "{app}"; Flags: ignoreversion
 
 ; Documentation
 Source: "..\README.md"; DestDir: "{app}"; Flags: ignoreversion isreadme
-Source: "..\README-OPTION4.md"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\README-BUILD-OPTIONS.md"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\QUICKSTART-OPTION4.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\test-opencode-guide.md"; DestDir: "{app}"; Flags: ignoreversion
 
 ; Icône
@@ -89,9 +79,8 @@ Source: "..\icone\oignon.ico"; DestDir: "{app}"; Flags: ignoreversion
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\oignon.ico"; WorkingDir: "{app}"
 Name: "{group}\Documentation (Web)"; Filename: "http://localhost:5545/procedure"; IconFilename: "{app}\oignon.ico"
-Name: "{group}\Documentation Option 4 (Fork Custom)"; Filename: "{app}\README-OPTION4.md"; IconFilename: "{app}\oignon.ico"
-Name: "{group}\Guide Rapide Option 4"; Filename: "{app}\QUICKSTART-OPTION4.md"; IconFilename: "{app}\oignon.ico"
-Name: "{group}\Build Docker (Menu)"; Filename: "{app}\rebuild-fast.bat"; IconFilename: "{app}\oignon.ico"; WorkingDir: "{app}"
+Name: "{group}\Build Docker"; Filename: "{app}\rebuild-fast.bat"; IconFilename: "{app}\oignon.ico"; WorkingDir: "{app}"
+Name: "{group}\Test OpenCode"; Filename: "{app}\test-quick.bat"; IconFilename: "{app}\oignon.ico"; WorkingDir: "{app}"
 Name: "{group}\Solution Power Platform"; Filename: "{#MyDataDir}\Solution"; IconFilename: "{app}\oignon.ico"
 Name: "{group}\Rapports Clients"; Filename: "{#MyDataDir}\clients"; IconFilename: "{app}\oignon.ico"
 Name: "{group}\Configuration"; Filename: "{app}\configure.bat"; IconFilename: "{app}\oignon.ico"; WorkingDir: "{app}"
