@@ -90,6 +90,32 @@ if errorlevel 1 (
     goto :cleanup
 )
 
+:: ========================================
+:: Verification image Docker
+:: ========================================
+docker images -q auxpetitsoignons-trad-bot:latest >nul 2>&1
+if errorlevel 1 (
+    echo(
+    echo ========================================
+    echo   Image Docker non trouvee
+    echo ========================================
+    echo(
+    echo L'image Docker n'a pas encore ete creee.
+    echo Veuillez d'abord executer: rebuild-fast.bat
+    echo(
+    set /p BUILD_NOW="Voulez-vous la creer maintenant ? (O/N) : "
+    if /i "%BUILD_NOW%"=="O" (
+        call "%SCRIPT_DIR%rebuild-fast.bat"
+        if errorlevel 1 (
+            echo(
+            echo Erreur lors du build
+            goto :cleanup
+        )
+    ) else (
+        goto :cleanup
+    )
+)
+
 echo(
 echo Demarrage du container..
 echo(
