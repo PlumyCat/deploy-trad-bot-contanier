@@ -1,0 +1,174 @@
+# syntax=docker/dockerfile:1
+# ============================================
+# VERSION CUSTOM OPTIMISÉE avec cache Bun
+# Fork Aux-petits-Oignons avec bun install pendant le build
+# ============================================
+
+# ============================================
+# STAGE 1: BUILDER Python
+# ============================================
+FROM ubuntu:24.04 AS builder-python
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
+    apt-get update && apt-get install -y \
+    python3-pip python3-venv build-essential
+
+WORKDIR /app
+COPY requirements.txt .
+RUN --mount=type=cache,target=/root/.cache/pip \
+    python3 -m venv venv && \
+    . venv/bin/activate && \
+    pip install -r requirements.txt markdown flask requests
+
+# ============================================
+# STAGE 2: BUILDER OpenCode Fork avec Bun
+# ============================================
+FROM oven/bun:1.1.38 AS builder-opencode
+
+# Installer git pour cloner
+RUN apt-get update && apt-get install -y git
+
+WORKDIR /build
+
+# Cloner le fork
+RUN git clone https://github.com/PlumyCat/Aux-petits-Oignons.git .
+
+# INSTALLER LES DÉPENDANCES MAINTENANT (pendant le build)
+RUN echo "Installing Bun dependencies (1818 packages)..." && \
+    bun install && \
+    echo "Dependencies installed" && \
+    # Mettre à jour baseline-browser-mapping pour supprimer le warning
+    bun update baseline-browser-mapping --silent 2>/dev/null || true
+
+# Créer le wrapper OpenCode
+RUN mkdir -p /build/bin && \
+    cat > /build/bin/opencode <<'WRAPPER' && \
+#!/bin/bash
+# Wrapper pour lancer le fork Aux-petits-Oignons avec Bun
+cd /opt/aux-petits-oignons/packages/opencode
+exec bun run --conditions=browser ./src/index.ts "$@"
+WRAPPER
+    chmod +x /build/bin/opencode
+
+# ============================================
+# STAGE 3: RUNTIME
+# ============================================
+FROM ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Packages système de base
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
+    apt-get update && apt-get install -y \
+    python3 curl wget git rsync jq zip unzip \
+    gnupg lsb-release software-properties-common apt-transport-https ca-certificates
+
+# Azure CLI
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
+    curl -sL https://aka.ms/InstallAzureCLIDeb | bash
+
+# .NET 8 SDK + Azure Functions Core Tools
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
+    wget -q https://packages.microsoft.com/config/ubuntu/24.04/packages-microsoft-prod.deb && \
+    dpkg -i packages-microsoft-prod.deb && \
+    rm packages-microsoft-prod.deb && \
+    apt-get update && \
+    apt-get install -y dotnet-sdk-8.0 azure-functions-core-tools-4
+
+# Node.js (requis pour exécuter OpenCode)
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
+    curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y nodejs
+
+# Installer Bun (requis pour exécution OpenCode)
+RUN curl -fsSL https://bun.sh/install | bash && \
+    ln -s /root/.bun/bin/bun /usr/local/bin/bun
+
+# Copier le fork AVEC les node_modules déjà installés
+COPY --from=builder-opencode /build /opt/aux-petits-oignons
+
+# Copier le wrapper OpenCode
+COPY --from=builder-opencode /build/bin/opencode /usr/local/bin/opencode
+RUN chmod +x /usr/local/bin/opencode
+
+# Marquer comme déjà installé (pas besoin de bun install au démarrage)
+RUN touch /opt/aux-petits-oignons/.build_done
+
+# Verify installations de base
+RUN echo "=== Verification des installations ===" && \
+    az --version | head -5 && \
+    func --version && \
+    bun --version && \
+    opencode --version
+
+WORKDIR /app
+
+# Copier le venv Python depuis builder
+COPY --from=builder-python /app/venv /app/venv
+
+# Configuration OpenCode
+RUN mkdir -p /root/.config/opencode
+
+# Copier les configs depuis le fork
+RUN cp /opt/aux-petits-oignons/config/enterprise-config.json /root/.config/opencode/ 2>/dev/null || true && \
+    cp /opt/aux-petits-oignons/.opencode/opencode.jsonc /root/.config/opencode/opencode.json 2>/dev/null || true && \
+    cp /opt/aux-petits-oignons/.env.example /root/.config/opencode/.env.example 2>/dev/null || true
+
+# Copier les fichiers .env s'ils existent dans conf_opencode/
+RUN mkdir -p /tmp/conf_copy
+COPY conf_opencode/ /tmp/conf_copy/
+RUN if [ -f /tmp/conf_copy/.env ]; then \
+        cp /tmp/conf_copy/.env /root/.config/opencode/.env; \
+    elif [ -f /tmp/conf_copy/.env.example.custom ]; then \
+        cp /tmp/conf_copy/.env.example.custom /root/.config/opencode/.env; \
+    fi && \
+    rm -rf /tmp/conf_copy
+
+# Copy documentation server
+COPY doc_server.py /app/doc_server.py
+
+# Activate venv by default
+ENV VIRTUAL_ENV=/app/venv
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+
+# Variables d'environnement pour le fork
+ENV OPENCODE_ENTERPRISE_MODE=true
+ENV OPENCODE_CONFIG_PATH=/root/.config/opencode/enterprise-config.json
+
+# Message de bienvenue personnalisé
+RUN echo '\n\
+echo ""\n\
+echo "========================================"\n\
+echo "  🧅 Aux Petits Oignons - Be-Cloud"\n\
+echo "========================================"\n\
+echo ""\n\
+echo "  Modeles IA disponibles (Azure):"\n\
+echo "    - GPT-4.1 Mini    (defaut)"\n\
+echo "    - GPT-5 Mini"\n\
+echo "    - Model Routeur"\n\
+echo "    - Claude Sonnet   (si disponible)"\n\
+echo ""\n\
+echo "  opencode      Nouvelle conversation"\n\
+echo "  opencode -c   REPRENDRE conversation"\n\
+echo ""\n\
+echo "  az-update     Mettre a jour Azure CLI"\n\
+echo ""\n\
+echo "========================================"\n\
+echo ""\n\
+' >> /root/.bashrc
+
+# Copy and setup entrypoint (version simplifiée sans bun install)
+COPY entrypoint-cached.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+EXPOSE 8080
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+CMD ["bash"]
