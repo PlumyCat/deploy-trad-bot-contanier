@@ -138,6 +138,13 @@ echo ""\n\
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
+# Empêcher OpenCode de détecter le fork comme projet
+RUN echo "**/*" > /opt/aux-petits-oignons/.opencodeignore && \
+    echo "Ce dossier contient le fork OpenCode - PAS un projet utilisateur" > /opt/aux-petits-oignons/README-IGNORE.txt
+
+# Copier le guide de projet pour OpenCode
+COPY CLAUDE-PROJET.md /app/CLAUDE.md
+
 EXPOSE 8080
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
