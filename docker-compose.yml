@@ -2,6 +2,7 @@ services:
   trad-bot:
     # Build local uniquement
     build: .
+    image: auxpetitsoignons-trad-bot:latest
     container_name: trad-bot-opencode
     volumes:
       # Donnees utilisateur (synchronises avec le repo Git dans le container)

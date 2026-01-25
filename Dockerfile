@@ -1,101 +1,105 @@
+# syntax=docker/dockerfile:1
 # ============================================
-# STAGE 1: BUILDER (avec pip pour construire venv)
+# VERSION CUSTOM avec fork Aux-petits-Oignons
+# Build du fork personnalisé avec config entreprise
 # ============================================
-FROM ubuntu:24.04 AS builder
+
+# ============================================
+# STAGE 1: BUILDER Python
+# ============================================
+FROM ubuntu:24.04 AS builder-python
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Installation Python et outils de build (uniquement pour builder)
-RUN apt-get update && apt-get install -y \
-    python3-pip \
-    python3-venv \
-    build-essential \
-    && rm -rf /var/lib/apt/lists/*
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
+    apt-get update && apt-get install -y \
+    python3-pip python3-venv build-essential
 
-# Créer le venv et installer les dépendances Python
 WORKDIR /app
 COPY requirements.txt .
-RUN python3 -m venv venv && \
+RUN --mount=type=cache,target=/root/.cache/pip \
+    python3 -m venv venv && \
     . venv/bin/activate && \
-    pip install --no-cache-dir -r requirements.txt && \
-    pip install --no-cache-dir markdown flask requests && \
-    pip cache purge
+    pip install -r requirements.txt markdown flask requests
 
 # ============================================
-# STAGE 2: RUNTIME (image finale optimisée)
+# STAGE 2: CLONER le fork (sans build)
+# ============================================
+FROM alpine/git AS git-cloner
+
+WORKDIR /build
+
+# Cloner le fork Aux-petits-Oignons (on fera l'install au runtime)
+RUN git clone https://github.com/PlumyCat/Aux-petits-Oignons.git .
+
+# ============================================
+# STAGE 3: RUNTIME
 # ============================================
 FROM ubuntu:24.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# ============================================
-# Installation CONSOLIDÉE de TOUS les packages
-# ============================================
-RUN apt-get update && apt-get install -y \
-    # Python runtime (PAS build-essential)
-    python3 \
-    # Outils système
-    curl wget git rsync jq zip unzip \
-    # Pour repositories externes
-    gnupg lsb-release software-properties-common apt-transport-https ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
+# Packages système de base
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
+    apt-get update && apt-get install -y \
+    python3 curl wget git rsync jq zip unzip \
+    gnupg lsb-release software-properties-common apt-transport-https ca-certificates
 
-# ============================================
-# Azure CLI (installation + nettoyage)
-# ============================================
-RUN curl -sL https://aka.ms/InstallAzureCLIDeb | bash && \
-    rm -rf /var/lib/apt/lists/*
+# Azure CLI
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
+    curl -sL https://aka.ms/InstallAzureCLIDeb | bash
 
-# ============================================
-# .NET 8 SDK (requis par Azure Functions Core Tools)
-# ============================================
-RUN wget -q https://packages.microsoft.com/config/ubuntu/24.04/packages-microsoft-prod.deb && \
+# .NET 8 SDK + Azure Functions Core Tools
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
+    wget -q https://packages.microsoft.com/config/ubuntu/24.04/packages-microsoft-prod.deb && \
     dpkg -i packages-microsoft-prod.deb && \
     rm packages-microsoft-prod.deb && \
     apt-get update && \
-    apt-get install -y dotnet-sdk-8.0 && \
-    rm -rf /var/lib/apt/lists/*
+    apt-get install -y dotnet-sdk-8.0 azure-functions-core-tools-4
 
-# ============================================
-# Azure Functions Core Tools v4
-# CRITIQUE: C'est le plus long, mais NÉCESSAIRE
-# ============================================
-RUN apt-get update && \
-    apt-get install -y azure-functions-core-tools-4 && \
-    rm -rf /var/lib/apt/lists/*
+# Node.js (requis pour exécuter OpenCode)
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
+    curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y nodejs
 
-# ============================================
-# Node.js + OpenCode (installation + nettoyage agressif)
-# ============================================
-RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
-    apt-get install -y nodejs && \
-    npm install -g opencode-ai@latest && \
-    npm cache clean --force && \
-    rm -rf ~/.npm /tmp/npm* /var/lib/apt/lists/*
+# Installer Bun (requis pour build et exécution OpenCode)
+RUN curl -fsSL https://bun.sh/install | bash && \
+    ln -s /root/.bun/bin/bun /usr/local/bin/bun
 
-# Verify installations
+# Copier le fork cloné (non compilé) depuis git-cloner
+COPY --from=git-cloner /build /opt/aux-petits-oignons
+
+# Note: bun install + bun run build sera fait au démarrage dans entrypoint.sh
+
+# Verify installations de base
 RUN echo "=== Verification des installations ===" && \
     az --version | head -5 && \
     func --version && \
-    which opencode && opencode --version
+    bun --version
 
 WORKDIR /app
 
-# ============================================
-# Copier le venv depuis le builder (économise espace)
-# ============================================
-COPY --from=builder /app/venv /app/venv
+# Copier le venv Python depuis builder
+COPY --from=builder-python /app/venv /app/venv
 
-# ============================================
-# Configuration OpenCode
-# ============================================
+# Configuration OpenCode - Préparer le répertoire (les fichiers seront copiés au runtime)
 RUN mkdir -p /root/.config/opencode
 
-COPY conf_opencode/opencode.json /root/.config/opencode/
-COPY conf_opencode/.env* /root/.config/opencode/
-RUN if [ ! -f /root/.config/opencode/.env ]; then \
-    cp /root/.config/opencode/.env.example /root/.config/opencode/.env 2>/dev/null || true; \
-    fi
+# Copier les fichiers .env s'ils existent dans conf_opencode/
+# Note: les fichiers de config du fork seront copiés au runtime par entrypoint.sh
+RUN mkdir -p /tmp/conf_copy
+COPY conf_opencode/ /tmp/conf_copy/
+RUN if [ -f /tmp/conf_copy/.env ]; then \
+        cp /tmp/conf_copy/.env /root/.config/opencode/.env; \
+    elif [ -f /tmp/conf_copy/.env.example.custom ]; then \
+        cp /tmp/conf_copy/.env.example.custom /root/.config/opencode/.env; \
+    fi && \
+    rm -rf /tmp/conf_copy
 
 # Copy documentation server
 COPY doc_server.py /app/doc_server.py
@@ -104,14 +108,22 @@ COPY doc_server.py /app/doc_server.py
 ENV VIRTUAL_ENV=/app/venv
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
-# ============================================
-# Message de bienvenue
-# ============================================
+# Variables d'environnement pour le fork
+ENV OPENCODE_ENTERPRISE_MODE=true
+ENV OPENCODE_CONFIG_PATH=/root/.config/opencode/enterprise-config.json
+
+# Message de bienvenue personnalisé
 RUN echo '\n\
 echo ""\n\
 echo "========================================"\n\
 echo "  🧅 Aux Petits Oignons - Be-Cloud"\n\
 echo "========================================"\n\
+echo ""\n\
+echo "  Modeles IA disponibles (Azure):"\n\
+echo "    - GPT-4.1 Mini    (defaut)"\n\
+echo "    - GPT-5 Mini"\n\
+echo "    - Model Routeur"\n\
+echo "    - Claude Sonnet   (si disponible)"\n\
 echo ""\n\
 echo "  opencode      Nouvelle conversation"\n\
 echo "  opencode -c   REPRENDRE conversation"\n\
@@ -126,9 +138,6 @@ echo ""\n\
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-# Copy OpenCode wrapper (removed from Dockerfile, using entrypoint function instead)
-
-# Expose port for documentation server
 EXPOSE 8080
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

@@ -1,17 +1,10 @@
-# Secrets
+# Credentials
 conf_opencode/.env
 conf_opencode/credentials.encrypted
 
 # Docker
-*.log
-
-# Inno Setup output
-installer/output/
-
-# Windows
-Thumbs.db
-Desktop.ini
+.dockerignore
 
 # Temp files
+*.log
 *.tmp
-*.bak
